@@ -1,15 +1,15 @@
 package at.proxy.remote
 
+import at.proxy.protocol.SocketWithStream
+import at.proxy.protocol.Type
 import at.proxy.protocol.Utils
 import java.io.DataInputStream
+import java.io.File
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.concurrent.Executors
-import javax.crypto.Cipher
 import javax.crypto.CipherInputStream
 import javax.crypto.CipherOutputStream
-import javax.crypto.spec.SecretKeySpec
-import kotlin.concurrent.thread
 
 object Bootstrap {
 
@@ -19,33 +19,25 @@ object Bootstrap {
         val server = ServerSocket(9528)
         while (true) {
             val client = server.accept()
+            val inbounds = SocketWithStream("from-local", client,
+                Utils.cipherInputStream(client),
+                Utils.cipherOutputStream(client)
+            )
             executor.execute {
-                val ins = client.getInputStream()
-                val out = client.getOutputStream()
-
-                val din = DataInputStream(ins)
+                val din = DataInputStream(inbounds.ins)
+                val id = din.readUTF()
                 val address = din.readUTF()
                 val port = din.readInt()
+                println("Relay: $address:$port")
 
                 val relay = Socket(address, port)
-                doRelay(client, relay)
-                doRelay(relay, client)
+                relay.soTimeout = 30 * 1000
+                val outbounds = SocketWithStream("to-site", relay, relay.getInputStream(), relay.getOutputStream())
+                Utils.doRelay(id, Type.RIN, outbounds, inbounds)
+                Utils.doRelay(id, Type.ROUT, inbounds, outbounds)
             }
         }
     }
 
-    fun doRelay(from: Socket, to: Socket) =
-        thread {
-            try {
-                from.getInputStream().copyTo(to.getOutputStream(), 8192)
-            } finally {
-                if (!from.isClosed) {
-                    from.close()
-                }
-                if (!to.isClosed) {
-                    to.shutdownInput()
-                }
-            }
-        }
 
 }

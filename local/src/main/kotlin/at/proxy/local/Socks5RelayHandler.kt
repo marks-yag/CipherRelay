@@ -1,41 +1,37 @@
 package at.proxy.local
 
+import at.proxy.protocol.SocketWithStream
+import at.proxy.protocol.Type
 import at.proxy.protocol.Utils
 import java.io.DataOutputStream
-import java.io.InputStream
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.util.*
 import javax.crypto.CipherInputStream
-import kotlin.concurrent.thread
+import javax.crypto.CipherOutputStream
 
 class Socks5RelayHandler(private val remoteAddr: InetSocketAddress) {
     fun doRelay(client: Socket, targetAddr: InetSocketAddress) {
         val remote = Socket(remoteAddr.hostName, remoteAddr.port)
         remote.soTimeout = 30 * 1000
-        val input = client.getInputStream()
-        val output = remote.getOutputStream()
-        DataOutputStream(output).apply {
+        val inbounds = SocketWithStream("from-client", client, client.getInputStream(), client.getOutputStream())
+        val outbounds = SocketWithStream(
+            "to-remote",
+            remote,
+            Utils.cipherInputStream(remote),
+            Utils.cipherOutputStream(remote))
+
+        val id = UUID.randomUUID().toString()
+        DataOutputStream(outbounds.os).apply {
+            writeUTF(id)
             writeUTF(targetAddr.hostName)
             writeInt(targetAddr.port)
+            flush()
         }
 
-        val clientToRemote = doRelay(client, remote)
-        val remoteToClient = doRelay(remote, client)
+        val clientToRemote = Utils.doRelay(id, Type.OUT, inbounds, outbounds)
+        val remoteToClient = Utils.doRelay(id, Type.IN, outbounds, inbounds)
     }
 
-    fun doRelay(from: Socket, to: Socket) =
-        thread {
-            try {
-                val output = to.getOutputStream()
-                from.getInputStream().copyTo(output, 8192)
-            } finally {
-                if (!from.isClosed) {
-                    from.close()
-                }
-                if (!to.isClosed) {
-                    to.shutdownInput()
-                }
-            }
-        }
 
 }

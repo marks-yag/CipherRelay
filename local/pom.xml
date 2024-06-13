@@ -23,6 +23,7 @@
             <artifactId>at-proxy-protocol</artifactId>
             <version>${project.version}</version>
         </dependency>
+
         <dependency>
             <groupId>com.github.marks-yag</groupId>
             <artifactId>config-core</artifactId>
