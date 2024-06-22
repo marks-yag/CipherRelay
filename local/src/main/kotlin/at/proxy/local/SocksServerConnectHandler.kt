@@ -19,6 +19,7 @@ import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.Encoders
 import at.proxy.protocol.Encoders.Companion.encode
 import at.proxy.protocol.Socks5Connection
+import com.github.yag.crypto.AESCrypto
 import io.netty.buffer.Unpooled
 import io.netty.channel.*
 import io.netty.channel.ChannelHandler.Sharable
@@ -28,12 +29,17 @@ import io.netty.handler.codec.socksx.v5.Socks5CommandRequest
 import io.netty.handler.codec.socksx.v5.Socks5CommandStatus
 import ketty.core.client.client
 import ketty.core.common.isSuccessful
+import ketty.core.common.readArray
+import ketty.core.common.status
+import ketty.core.protocol.StatusCode
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
 
 @Sharable
 class SocksServerConnectHandler(private val atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInboundHandler<SocksMessage>() {
     private val client = client(atProxyRemoteAddress)
+
+    private val crypto = AESCrypto("hello".toByteArray())
 
     @Throws(Exception::class)
     public override fun channelRead0(ctx: ChannelHandlerContext, message: SocksMessage) {
@@ -54,12 +60,16 @@ class SocksServerConnectHandler(private val atProxyRemoteAddress: InetSocketAddr
             client.send(AtProxyRequest.READ, connection.encode()) { response ->
                 if (response.isSuccessful()) {
                     log.info("Received read response.")
-                    ctx.channel().writeAndFlush(response.body.retain())
+                    if (response.status() == StatusCode.PARTIAL_CONTENT) {
+                        ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(crypto.decrypt(response.body.readArray())))
+                    } else {
+                        ctx.channel().close()
+                    }
                 } else {
                     log.warn("Read failed.")
                 }
             }
-            ctx.channel().pipeline().addLast(RelayHandler(connection, client))
+            ctx.channel().pipeline().addLast(RelayHandler(connection, crypto, client))
         } else {
             ctx.channel().writeAndFlush(
                 DefaultSocks5CommandResponse(
@@ -67,10 +77,6 @@ class SocksServerConnectHandler(private val atProxyRemoteAddress: InetSocketAddr
                 )
             )
         }
-    }
-
-    override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-        log.warn("Exception found", cause)
     }
 
     companion object {

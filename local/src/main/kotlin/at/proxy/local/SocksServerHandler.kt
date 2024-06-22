@@ -15,7 +15,6 @@
  */
 package at.proxy.local
 
-import at.proxy.protocol.Encoders
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.ChannelHandlerContext
@@ -61,10 +60,5 @@ class SocksServerHandler(private val atProxyRemoteAddress: InetSocketAddress) : 
 
     override fun channelReadComplete(ctx: ChannelHandlerContext) {
         ctx.flush()
-    }
-
-    override fun exceptionCaught(ctx: ChannelHandlerContext, throwable: Throwable) {
-        logger.error("exceptionCaught", throwable)
-        MixinServerUtils.closeOnFlush(ctx.channel())
     }
 }
