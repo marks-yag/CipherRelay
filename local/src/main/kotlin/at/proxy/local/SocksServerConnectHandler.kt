@@ -16,23 +16,18 @@
 package at.proxy.local
 
 import at.proxy.protocol.AtProxyRequest
-import io.netty.bootstrap.Bootstrap
+import at.proxy.protocol.Encoders
+import at.proxy.protocol.Encoders.Companion.encode
+import at.proxy.protocol.Socks5Connection
 import io.netty.buffer.Unpooled
 import io.netty.channel.*
 import io.netty.channel.ChannelHandler.Sharable
-import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.socksx.SocksMessage
 import io.netty.handler.codec.socksx.v5.DefaultSocks5CommandResponse
 import io.netty.handler.codec.socksx.v5.Socks5CommandRequest
 import io.netty.handler.codec.socksx.v5.Socks5CommandStatus
-import io.netty.util.concurrent.Future
-import io.netty.util.concurrent.FutureListener
-import ketty.core.client.KettyClient
 import ketty.core.client.client
-import ketty.core.common.Packet
-import ketty.core.common.body
 import ketty.core.common.isSuccessful
-import ketty.core.protocol.ResponseHeader
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
 
@@ -56,7 +51,7 @@ class SocksServerConnectHandler(private val atProxyRemoteAddress: InetSocketAddr
                     request.dstPort()
                 )
             )
-            client.send(AtProxyRequest.READ, ConnectionEncoder.encode(connection, Unpooled.buffer())) { response ->
+            client.send(AtProxyRequest.READ, connection.encode()) { response ->
                 if (response.isSuccessful()) {
                     log.info("Received read response.")
                     ctx.channel().writeAndFlush(response.body.retain())

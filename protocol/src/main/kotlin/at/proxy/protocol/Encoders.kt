@@ -1,0 +1,18 @@
+package at.proxy.protocol
+
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
+
+class Encoders {
+
+    companion object {
+
+        @JvmStatic
+        fun Socks5Connection.encode(buf: ByteBuf = Unpooled.buffer()): ByteBuf {
+            buf.writeLong(id)
+            return buf
+        }
+
+    }
+
+}

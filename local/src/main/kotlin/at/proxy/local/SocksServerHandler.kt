@@ -15,6 +15,7 @@
  */
 package at.proxy.local
 
+import at.proxy.protocol.Encoders
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.ChannelHandlerContext
@@ -42,16 +43,12 @@ class SocksServerHandler(private val atProxyRemoteAddress: InetSocketAddress) : 
         if (socksRequest is Socks5InitialRequest) {
             ctx.pipeline().addFirst(Socks5CommandRequestDecoder())
             ctx.write(DefaultSocks5InitialResponse(Socks5AuthMethod.NO_AUTH))
-            //如果需要密码，这里可以换成
-//            ctx.write(new DefaultSocks5InitialResponse(Socks5AuthMethod.PASSWORD));
         } else if (socksRequest is Socks5PasswordAuthRequest) {
-            //如果需要密码，这里需要验证密码
             ctx.pipeline().addFirst(Socks5CommandRequestDecoder())
             ctx.write(DefaultSocks5PasswordAuthResponse(Socks5PasswordAuthStatus.SUCCESS))
         } else if (socksRequest is Socks5CommandRequest) {
             if (socksRequest.type() === Socks5CommandType.CONNECT) {
                 ctx.pipeline().addLast(socketServerConnectHandler)
-                ctx.pipeline().addLast(ConnectionEncoder())
                 ctx.pipeline().remove(this)
                 ctx.fireChannelRead(socksRequest)
             } else {
