@@ -45,6 +45,7 @@ class RemoteServer : AutoCloseable {
         server = server {
             config {
                 port = 9528
+                host = "0.0.0.0"
             }
             connection {
                 add {

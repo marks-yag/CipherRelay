@@ -8,7 +8,7 @@ import java.net.InetSocketAddress
 
 class MixinServerInitializer(atProxyRemoteAddress: InetSocketAddress) : ChannelInitializer<SocketChannel>() {
 
-    private val mixInServerHandler = MixinSelectHandler(atProxyRemoteAddress)
+    private val mixInServerHandler = SelectHandler(atProxyRemoteAddress)
 
     @Throws(Exception::class)
     public override fun initChannel(ch: SocketChannel) {

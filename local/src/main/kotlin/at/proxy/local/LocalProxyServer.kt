@@ -1,5 +1,6 @@
 package at.proxy.local
 
+import config.config
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
 import io.netty.channel.EventLoopGroup
@@ -7,10 +8,9 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.net.InetSocketAddress
 
-class MixinProxyServer(private val config: Socks5ServerConfig) : AutoCloseable {
-    private val logger: Logger = LoggerFactory.getLogger(MixinProxyServer::class.java)
+class LocalProxyServer(private val config: Socks5ServerConfig) : AutoCloseable {
+    private val logger: Logger = LoggerFactory.getLogger(LocalProxyServer::class.java)
 
     private var serverBootstrap: ServerBootstrap
 
@@ -40,9 +40,8 @@ class MixinProxyServer(private val config: Socks5ServerConfig) : AutoCloseable {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            val server = MixinProxyServer(Socks5ServerConfig().also {
-                it.remoteEndpoint = InetSocketAddress("127.0.0.1", 9528)
-            })
+            val config = System.getProperties().config(Socks5ServerConfig::class.java)
+            val server = LocalProxyServer(config)
             Runtime.getRuntime().addShutdownHook(Thread {
                 server.close()
             })

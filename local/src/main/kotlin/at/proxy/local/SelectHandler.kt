@@ -9,7 +9,7 @@ import io.netty.handler.codec.socksx.SocksVersion
 import java.net.InetSocketAddress
 
 @Sharable
-class MixinSelectHandler(atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInboundHandler<ByteBuf>() {
+class SelectHandler(atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInboundHandler<ByteBuf>() {
     private val socksServerHandler = SocksServerHandler(atProxyRemoteAddress)
 
     override fun channelRead0(ctx: ChannelHandlerContext, msg: ByteBuf) {
