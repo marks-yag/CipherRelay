@@ -35,7 +35,6 @@ class SocksServerHandler(private val atProxyRemoteAddress: InetSocketAddress) : 
     @Throws(Exception::class)
     public override fun channelRead0(ctx: ChannelHandlerContext, socksRequest: SocksMessage) {
         if (socksRequest.version() != SocksVersion.SOCKS5) {
-            logger.error("only supports socks5 protocol!")
             ctx.writeAndFlush(Unpooled.wrappedBuffer("protocol version illegal!".toByteArray()))
             return
         }

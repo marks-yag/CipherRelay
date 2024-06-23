@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
 
 @Sharable
-class SocksServerConnectHandler(private val atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInboundHandler<SocksMessage>() {
+class SocksServerConnectHandler(atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInboundHandler<SocksMessage>() {
     private val client = client(atProxyRemoteAddress)
 
     private val crypto = AESCrypto("hello".toByteArray())
@@ -59,7 +59,7 @@ class SocksServerConnectHandler(private val atProxyRemoteAddress: InetSocketAddr
             )
             client.send(AtProxyRequest.READ, connection.encode()) { response ->
                 if (response.isSuccessful()) {
-                    log.info("Received read response.")
+                    log.debug("Received read response, length: {}.", response.body.readableBytes())
                     if (response.status() == StatusCode.PARTIAL_CONTENT) {
                         ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(crypto.decrypt(response.body.readArray())))
                     } else {

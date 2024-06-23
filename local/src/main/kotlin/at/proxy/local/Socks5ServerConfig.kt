@@ -11,6 +11,9 @@ class Socks5ServerConfig {
     var port = 9527
 
     @Value
+    var key = "hello"
+
+    @Value
     var parentThreads = 4
 
     @Value

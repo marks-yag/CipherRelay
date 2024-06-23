@@ -25,7 +25,7 @@ class LocalProxyServer(private val config: Socks5ServerConfig) : AutoCloseable {
 
         serverBootstrap = ServerBootstrap()
             .channel(NioServerSocketChannel::class.java)
-            .childHandler(MixinServerInitializer(config.remoteEndpoint))
+            .childHandler(LocalServerInitializer(config.remoteEndpoint))
             .group(serverEventLoopGroup)
         acceptorChannel = serverBootstrap.bind(config.port).syncUninterruptibly().channel()
     }

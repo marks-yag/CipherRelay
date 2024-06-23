@@ -23,7 +23,6 @@ class SelectHandler(atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInbo
 
         val version = SocksVersion.valueOf(versionVal)
         if (version == SocksVersion.SOCKS4a || version == SocksVersion.SOCKS5) {
-            //socks proxy
             p.addLast(
                 SocksPortUnificationServerHandler(),
                 socksServerHandler

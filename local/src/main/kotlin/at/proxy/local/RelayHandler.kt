@@ -35,10 +35,6 @@ class RelayHandler(private val connection: Socks5Connection, private val crypto:
 
     }
 
-    override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-        log.warn("Exception caught: {}.", connection, cause)
-    }
-
     companion object {
         private val log = LoggerFactory.getLogger(RelayHandler::class.java)
     }

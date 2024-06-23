@@ -6,7 +6,7 @@ import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 import java.net.InetSocketAddress
 
-class MixinServerInitializer(atProxyRemoteAddress: InetSocketAddress) : ChannelInitializer<SocketChannel>() {
+class LocalServerInitializer(atProxyRemoteAddress: InetSocketAddress) : ChannelInitializer<SocketChannel>() {
 
     private val mixInServerHandler = SelectHandler(atProxyRemoteAddress)
 
