@@ -6,6 +6,7 @@ import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
+import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
@@ -27,10 +28,9 @@ import ketty.core.common.status
 import ketty.core.protocol.RequestHeader
 import ketty.core.protocol.ResponseHeader
 import ketty.core.protocol.StatusCode
-import ketty.core.server.KettyRequestHandler
-import ketty.core.server.KettyServer
-import ketty.core.server.server
+import ketty.core.server.*
 import org.slf4j.LoggerFactory
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 class RemoteServer : AutoCloseable {
@@ -48,9 +48,20 @@ class RemoteServer : AutoCloseable {
                 host = "0.0.0.0"
             }
             connection {
-                add {
-                    it.put("current_connection_id", AtomicLong())
-                }
+                add(object: KettyConnectionHandler {
+                    private val channels = ConcurrentHashMap<Long, ChannelFuture>()
+
+                    override fun handle(connection: KettyConnection) {
+                        connection.put("current_connection_id", AtomicLong())
+                        connection.put("connections", channels);
+                    }
+
+                    override fun inactive(connection: KettyConnection) {
+                        channels.values.forEach {
+                            it.channel().close()
+                        }
+                    }
+                })
             }
             request {
                 set(AtProxyRequest.CONNECT, KettyRequestHandler { connection, request, echo ->
@@ -60,7 +71,7 @@ class RemoteServer : AutoCloseable {
                     val port = endpoint.split(":").last().toInt()
                     val targetSiteBootstrap = Bootstrap()
                     val connectionId = (connection.get("current_connection_id") as AtomicLong).getAndIncrement()
-                    targetSiteBootstrap.group(eventloop)
+                    val c = targetSiteBootstrap.group(eventloop)
                         .channel(getChannelClass())
                         .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                         .option(ChannelOption.SO_KEEPALIVE, true)
@@ -84,20 +95,25 @@ class RemoteServer : AutoCloseable {
                             }
 
                             override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-                                log.warn("Exception in: {}", connectionId, cause)
+                                super.exceptionCaught(ctx, cause)
+                                log.warn("Oops!", cause)
                             }
                         })
-
-
-                    targetSiteBootstrap.connect(host, port).addListener(ChannelFutureListener { future ->
-                        if (future.isSuccess) {
-                            log.info("Connected to {}:{}", host, port)
-                            echo(request.ok(Unpooled.buffer().writeLong(connectionId)))
-                        } else {
-                            echo(request.status(StatusCode.INTERNAL_ERROR))
-                        }
-                    })
-
+                        .connect(host, port)
+                        .addListener(ChannelFutureListener { future ->
+                            if (future.isSuccess) {
+                                log.info("Connected to {}:{}", host, port)
+                                echo(request.ok(Unpooled.buffer().writeLong(connectionId)))
+                            } else {
+                                echo(request.status(StatusCode.INTERNAL_ERROR))
+                            }
+                        })
+                    (connection.get("connections") as ConcurrentHashMap<Long, ChannelFuture>)[connectionId] = c
+                })
+                set(AtProxyRequest.DISCONNECT, KettyRequestHandler { connection, request, echo ->
+                    val connectionId = request.body.readLong()
+                    log.info("Disconnect: {}.", connectionId)
+                    (connection.get("connections") as ConcurrentHashMap<Long, ChannelFuture>).remove(connectionId)?.channel()?.close()
                 })
                 set(AtProxyRequest.WRITE, KettyRequestHandler { connection, request, echo ->
                     val connectionId = request.body.readLong()

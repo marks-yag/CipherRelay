@@ -6,6 +6,8 @@ enum class AtProxyRequest: KettyRequestType {
 
     CONNECT,
 
+    DISCONNECT,
+
     READ,
 
     WRITE;

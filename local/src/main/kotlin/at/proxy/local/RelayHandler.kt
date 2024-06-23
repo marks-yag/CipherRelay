@@ -1,5 +1,6 @@
 package at.proxy.local
 
+import at.proxy.local.SocksServerHandler.Companion
 import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.Encoders
 import at.proxy.protocol.Encoders.Companion.encode
@@ -11,6 +12,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import ketty.core.client.KettyClient
 import ketty.core.common.readArray
+import ketty.core.common.use
 import org.slf4j.LoggerFactory
 
 class RelayHandler(private val connection: Socks5Connection, private val crypto: AESCrypto, private val kettyClient: KettyClient) : ChannelInboundHandlerAdapter() {
@@ -21,18 +23,31 @@ class RelayHandler(private val connection: Socks5Connection, private val crypto:
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         if (msg is ByteBuf) {
-            kettyClient.send(
-                AtProxyRequest.WRITE,
-                Unpooled.wrappedBuffer(
-                    connection.encode(),
-                    Unpooled.wrappedBuffer(crypto.encrypt(msg.readArray()))
+            Unpooled.wrappedBuffer(connection.encode(),
+                msg.use {
+                    Unpooled.wrappedBuffer(crypto.encrypt(it.readArray()))
+                }
+            ).use {
+                kettyClient.send(
+                    AtProxyRequest.WRITE,
+                    it
                 )
-            )
+            }
         }
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext) {
+        log.info("Channel inactive: {}.", connection)
+        connection.encode().use {
+            kettyClient.send(AtProxyRequest.DISCONNECT, it) {
+                log.info("Connection close: {}.", connection)
+            }
+        }
+    }
 
+    override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
+        super.exceptionCaught(ctx, cause)
+        log.warn("Oops! {}.", connection, cause)
     }
 
     companion object {

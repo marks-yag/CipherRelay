@@ -22,13 +22,11 @@ import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.socksx.SocksMessage
 import io.netty.handler.codec.socksx.SocksVersion
 import io.netty.handler.codec.socksx.v5.*
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
 
 @Sharable
-class SocksServerHandler(private val atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInboundHandler<SocksMessage>() {
-    private val logger: Logger = LoggerFactory.getLogger(SocksServerHandler::class.java)
+class SocksServerHandler(atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInboundHandler<SocksMessage>() {
 
     private val socketServerConnectHandler = SocksServerConnectHandler(atProxyRemoteAddress)
 
@@ -59,5 +57,14 @@ class SocksServerHandler(private val atProxyRemoteAddress: InetSocketAddress) : 
 
     override fun channelReadComplete(ctx: ChannelHandlerContext) {
         ctx.flush()
+    }
+
+    override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
+        super.exceptionCaught(ctx, cause)
+        log.warn("Oops!", cause)
+    }
+
+    companion object {
+        private val log = LoggerFactory.getLogger(SocksServerHandler::class.java)
     }
 }

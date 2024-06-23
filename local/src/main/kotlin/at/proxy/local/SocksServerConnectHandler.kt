@@ -31,6 +31,7 @@ import ketty.core.client.client
 import ketty.core.common.isSuccessful
 import ketty.core.common.readArray
 import ketty.core.common.status
+import ketty.core.common.use
 import ketty.core.protocol.StatusCode
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
@@ -57,16 +58,18 @@ class SocksServerConnectHandler(atProxyRemoteAddress: InetSocketAddress) : Simpl
                     request.dstPort()
                 )
             )
-            client.send(AtProxyRequest.READ, connection.encode()) { response ->
-                if (response.isSuccessful()) {
-                    log.debug("Received read response, length: {}.", response.body.readableBytes())
-                    if (response.status() == StatusCode.PARTIAL_CONTENT) {
-                        ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(crypto.decrypt(response.body.readArray())))
+            connection.encode().use {
+                client.send(AtProxyRequest.READ, it) { response ->
+                    if (response.isSuccessful()) {
+                        log.debug("Received read response, length: {}.", response.body.readableBytes())
+                        if (response.status() == StatusCode.PARTIAL_CONTENT) {
+                            ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(crypto.decrypt(response.body.readArray())))
+                        } else {
+                            ctx.channel().close()
+                        }
                     } else {
-                        ctx.channel().close()
+                        log.warn("Read failed.")
                     }
-                } else {
-                    log.warn("Read failed.")
                 }
             }
             ctx.channel().pipeline().addLast(RelayHandler(connection, crypto, client))

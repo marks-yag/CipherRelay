@@ -27,9 +27,6 @@ class SelectHandler(atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInbo
                 SocksPortUnificationServerHandler(),
                 socksServerHandler
             ).remove(this)
-        } else {
-            //http/tunnel proxy
-            //p.addLast(HttpServerHeadDecoder()).remove(this)
         }
         msg.retain()
         ctx.fireChannelRead(msg)
