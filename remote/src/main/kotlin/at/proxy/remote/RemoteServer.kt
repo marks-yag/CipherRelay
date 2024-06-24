@@ -153,10 +153,7 @@ class RemoteServer : AutoCloseable {
             Runtime.getRuntime().addShutdownHook(Thread {
                 server.close()
             })
-            repeat(1000) {
-                Thread.sleep(1000)
-                System.gc()
-            }
+            System.`in`.read()
         }
 
         internal fun createEventLoopGroup(threads: Int, name: String): EventLoopGroup {
