@@ -15,6 +15,7 @@
  */
 package at.proxy.local
 
+import at.proxy.local.RelayHandler.Companion
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.ChannelHandlerContext
@@ -23,6 +24,7 @@ import io.netty.handler.codec.socksx.SocksMessage
 import io.netty.handler.codec.socksx.SocksVersion
 import io.netty.handler.codec.socksx.v5.*
 import org.slf4j.LoggerFactory
+import java.io.IOException
 import java.net.InetSocketAddress
 
 @Sharable
@@ -60,8 +62,15 @@ class SocksServerHandler(atProxyRemoteAddress: InetSocketAddress) : SimpleChanne
     }
 
     override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-        super.exceptionCaught(ctx, cause)
-        log.warn("Oops!", cause)
+        when (cause) {
+            is IOException -> {
+                log.debug("IO failed.", cause)
+            }
+
+            else -> {
+                log.warn("Oops!", cause)
+            }
+        }
     }
 
     companion object {

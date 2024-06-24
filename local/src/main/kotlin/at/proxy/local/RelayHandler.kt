@@ -14,6 +14,7 @@ import ketty.core.client.KettyClient
 import ketty.core.common.readArray
 import ketty.core.common.use
 import org.slf4j.LoggerFactory
+import java.io.IOException
 
 class RelayHandler(private val connection: Socks5Connection, private val crypto: AESCrypto, private val kettyClient: KettyClient) : ChannelInboundHandlerAdapter() {
 
@@ -27,10 +28,9 @@ class RelayHandler(private val connection: Socks5Connection, private val crypto:
                 Unpooled.wrappedBuffer(crypto.encrypt(it.readArray()))
             }
             Unpooled.wrappedBuffer(connection.encode(), body).use {
-                kettyClient.send(
-                    AtProxyRequest.WRITE,
-                    it
-                )
+                kettyClient.send(AtProxyRequest.WRITE, it) {
+
+                }
             }
         }
     }
@@ -45,8 +45,15 @@ class RelayHandler(private val connection: Socks5Connection, private val crypto:
     }
 
     override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-        super.exceptionCaught(ctx, cause)
-        log.warn("Oops! {}.", connection, cause)
+        when (cause) {
+            is IOException -> {
+                log.debug("IO failed {}.", connection)
+            }
+
+            else -> {
+                log.warn("Oops! {}.", connection, cause)
+            }
+        }
     }
 
     companion object {

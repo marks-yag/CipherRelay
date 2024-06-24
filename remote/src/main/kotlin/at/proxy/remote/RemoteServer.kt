@@ -28,6 +28,7 @@ import ketty.core.protocol.ResponseHeader
 import ketty.core.protocol.StatusCode
 import ketty.core.server.*
 import org.slf4j.LoggerFactory
+import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
@@ -95,7 +96,15 @@ class RemoteServer : AutoCloseable {
                             }
 
                             override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-                                log.warn("Oops!", cause)
+                                when (cause) {
+                                    is IOException -> {
+                                        log.debug("IO failed {}.", connection)
+                                    }
+
+                                    else -> {
+                                        log.warn("Oops! {}.", connection, cause)
+                                    }
+                                }
                             }
                         })
                         .connect(host, port)
