@@ -46,39 +46,42 @@ class SocksServerConnectHandler(atProxyRemoteAddress: InetSocketAddress) : Simpl
     public override fun channelRead0(ctx: ChannelHandlerContext, message: SocksMessage) {
         val request = message as Socks5CommandRequest
         log.info("New socks5 connection: {}:{}.", request.dstAddr(), request.dstPort())
-        val connect = client.sendSync(AtProxyRequest.CONNECT, request.dstAddr() + ":" + request.dstPort())
-        if (connect.isSuccessful()) {
-            val connection = Socks5Connection(connect.body.slice().readLong())
-            log.info("Connect to {}:{}, id:{}.", request.dstAddr(), request.dstPort(), connection)
-            ctx.channel().writeAndFlush(
-                DefaultSocks5CommandResponse(
-                    Socks5CommandStatus.SUCCESS,
-                    request.dstAddrType(),
-                    request.dstAddr(),
-                    request.dstPort()
+        client.sendSync(AtProxyRequest.CONNECT, request.dstAddr() + ":" + request.dstPort()).use { connect ->
+            if (connect.isSuccessful()) {
+                val connection = Socks5Connection(connect.body.slice().readLong())
+                log.info("Connect to {}:{}, id:{}.", request.dstAddr(), request.dstPort(), connection)
+                ctx.channel().writeAndFlush(
+                    DefaultSocks5CommandResponse(
+                        Socks5CommandStatus.SUCCESS,
+                        request.dstAddrType(),
+                        request.dstAddr(),
+                        request.dstPort()
+                    )
                 )
-            )
-            connection.encode().use {
-                client.send(AtProxyRequest.READ, it) { response ->
-                    if (response.isSuccessful()) {
-                        log.debug("Received read response, length: {}.", response.body.readableBytes())
-                        if (response.status() == StatusCode.PARTIAL_CONTENT) {
-                            ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(crypto.decrypt(response.body.readArray())))
+                connection.encode().use {
+                    client.send(AtProxyRequest.READ, it) { response ->
+                        if (response.isSuccessful()) {
+                            log.debug("Received read response, length: {}.", response.body.readableBytes())
+                            if (response.status() == StatusCode.PARTIAL_CONTENT) {
+                                val decrypt = crypto.decrypt(response.body.readArray())
+                                ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(decrypt))
+                            } else {
+                                ctx.channel().close()
+                            }
                         } else {
+                            log.warn("Read failed.")
                             ctx.channel().close()
                         }
-                    } else {
-                        log.warn("Read failed.")
                     }
                 }
-            }
-            ctx.channel().pipeline().addLast(RelayHandler(connection, crypto, client))
-        } else {
-            ctx.channel().writeAndFlush(
-                DefaultSocks5CommandResponse(
-                    Socks5CommandStatus.FAILURE, request.dstAddrType()
+                ctx.channel().pipeline().addLast(RelayHandler(connection, crypto, client))
+            } else {
+                ctx.channel().writeAndFlush(
+                    DefaultSocks5CommandResponse(
+                        Socks5CommandStatus.FAILURE, request.dstAddrType()
+                    )
                 )
-            )
+            }
         }
     }
 

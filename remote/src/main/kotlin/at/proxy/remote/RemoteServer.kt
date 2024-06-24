@@ -20,11 +20,9 @@ import io.netty.channel.kqueue.KQueueEventLoopGroup
 import io.netty.channel.kqueue.KQueueSocketChannel
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioSocketChannel
+import io.netty.util.ReferenceCountUtil
 import io.netty.util.concurrent.DefaultThreadFactory
-import ketty.core.common.Packet
-import ketty.core.common.ok
-import ketty.core.common.readArray
-import ketty.core.common.status
+import ketty.core.common.*
 import ketty.core.protocol.RequestHeader
 import ketty.core.protocol.ResponseHeader
 import ketty.core.protocol.StatusCode
@@ -84,8 +82,10 @@ class RemoteServer : AutoCloseable {
                                 if (msg is ByteBuf) {
                                     val echo = connection.get("echo-$connectionId") as (Packet<ResponseHeader>) -> Unit
                                     val connectionRequest = connection.get("request-$connectionId") as (Packet<RequestHeader>)
-                                    echo(connectionRequest.status(StatusCode.PARTIAL_CONTENT, Unpooled.wrappedBuffer(crypto.encrypt(msg.readArray()))))
+                                    val encrypt = Unpooled.wrappedBuffer(crypto.encrypt(msg.readArray()))
+                                    echo(connectionRequest.status(StatusCode.PARTIAL_CONTENT, encrypt))
                                 }
+                                ReferenceCountUtil.release(msg)
                             }
 
                             override fun channelInactive(ctx: ChannelHandlerContext) {
@@ -95,7 +95,6 @@ class RemoteServer : AutoCloseable {
                             }
 
                             override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-                                super.exceptionCaught(ctx, cause)
                                 log.warn("Oops!", cause)
                             }
                         })
@@ -145,7 +144,10 @@ class RemoteServer : AutoCloseable {
             Runtime.getRuntime().addShutdownHook(Thread {
                 server.close()
             })
-            System.`in`.read()
+            repeat(1000) {
+                Thread.sleep(1000)
+                System.gc()
+            }
         }
 
         internal fun createEventLoopGroup(threads: Int, name: String): EventLoopGroup {

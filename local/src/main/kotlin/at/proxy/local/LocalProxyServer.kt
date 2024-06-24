@@ -45,7 +45,10 @@ class LocalProxyServer(private val config: Socks5ServerConfig) : AutoCloseable {
             Runtime.getRuntime().addShutdownHook(Thread {
                 server.close()
             })
-            System.`in`.read()
+            repeat(1000) {
+                Thread.sleep(1000)
+                System.gc()
+            }
         }
     }
 }

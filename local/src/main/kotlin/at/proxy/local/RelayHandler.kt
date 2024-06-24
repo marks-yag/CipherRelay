@@ -23,11 +23,10 @@ class RelayHandler(private val connection: Socks5Connection, private val crypto:
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         if (msg is ByteBuf) {
-            Unpooled.wrappedBuffer(connection.encode(),
-                msg.use {
-                    Unpooled.wrappedBuffer(crypto.encrypt(it.readArray()))
-                }
-            ).use {
+            val body = msg.use {
+                Unpooled.wrappedBuffer(crypto.encrypt(it.readArray()))
+            }
+            Unpooled.wrappedBuffer(connection.encode(), body).use {
                 kettyClient.send(
                     AtProxyRequest.WRITE,
                     it
