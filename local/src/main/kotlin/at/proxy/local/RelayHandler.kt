@@ -29,17 +29,17 @@ class RelayHandler(private val connection: Socks5Connection, private val crypto:
             }
             Unpooled.wrappedBuffer(connection.encode(), body).use {
                 kettyClient.send(AtProxyRequest.WRITE, it) {
-
+                    log.debug("Send write request done for {}.", connection)
                 }
             }
         }
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext) {
-        log.info("Channel inactive: {}.", connection)
+        log.debug("Channel inactive: {}.", connection)
         connection.encode().use {
             kettyClient.send(AtProxyRequest.DISCONNECT, it) {
-                log.info("Connection close: {}.", connection)
+                log.debug("Connection close: {}.", connection)
             }
         }
     }

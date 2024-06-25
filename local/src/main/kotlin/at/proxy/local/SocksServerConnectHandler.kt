@@ -15,6 +15,7 @@
  */
 package at.proxy.local
 
+import at.proxy.local.SocksServerHandler.Companion
 import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.Encoders
 import at.proxy.protocol.Encoders.Companion.encode
@@ -34,6 +35,7 @@ import ketty.core.common.status
 import ketty.core.common.use
 import ketty.core.protocol.StatusCode
 import org.slf4j.LoggerFactory
+import java.io.IOException
 import java.net.InetSocketAddress
 
 @Sharable
@@ -83,6 +85,18 @@ class SocksServerConnectHandler(atProxyRemoteAddress: InetSocketAddress) : Simpl
                         )
                     )
                 }
+            }
+        }
+    }
+
+    override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
+        when (cause) {
+            is IOException -> {
+                log.debug("IO failed.", cause)
+            }
+
+            else -> {
+                log.warn("Oops!", cause)
             }
         }
     }

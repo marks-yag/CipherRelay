@@ -125,14 +125,14 @@ class RemoteServer : AutoCloseable {
                 })
                 set(AtProxyRequest.WRITE, KettyRequestHandler { connection, request, echo ->
                     val connectionId = request.body.readLong()
-                    log.info("Received write request, connectionId: {}", connectionId)
+                    log.debug("Received write request, connectionId: {}", connectionId)
                     val ctx = connection.get("ctx-$connectionId") as ChannelHandlerContext
                     ctx.writeAndFlush(Unpooled.wrappedBuffer(crypto.decrypt(request.body.readArray())))
                     echo(request.ok())
                 })
                 set(AtProxyRequest.READ, KettyRequestHandler { connection, request, echo ->
                     val connectionId = request.body.readLong()
-                    log.info("Received read request, connectionId: {}", connectionId)
+                    log.debug("Received read request, connectionId: {}", connectionId)
                     connection.put("echo-$connectionId", echo)
                     connection.put("request-$connectionId", request)
                 })

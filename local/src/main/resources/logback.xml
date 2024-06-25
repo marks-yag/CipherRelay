@@ -27,12 +27,7 @@
         </layout>
     </appender>
 
-    <logger name="ketty" level="${log.level:-INFO}" additivity="false">
-        <appender-ref ref="STDOUT"/>
-    </logger>
-
-
-    <logger name="at.proxy" level="${log.level:-DEGUG}" additivity="false">
+    <logger name="at.proxy" level="${log.level:-INFO}" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
 
