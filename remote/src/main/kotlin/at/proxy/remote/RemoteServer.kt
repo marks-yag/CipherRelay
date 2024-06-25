@@ -2,6 +2,7 @@ package at.proxy.remote
 
 import at.proxy.protocol.AtProxyRequest
 import com.github.yag.crypto.AESCrypto
+import config.config
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
@@ -30,20 +31,21 @@ import ketty.core.server.*
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicLong
 
-class RemoteServer : AutoCloseable {
+class RemoteServer(config: RemoteConfig) : AutoCloseable {
 
     private val server: KettyServer
 
-    private val crypto = AESCrypto("hello".toByteArray())
+    private val crypto = AESCrypto(config.key.toByteArray())
 
     private val eventloop = createEventLoopGroup(Runtime.getRuntime().availableProcessors(), "remote")
 
     init {
         server = server {
             config {
-                port = 9528
+                port = config.port
                 host = "0.0.0.0"
             }
             connection {
@@ -72,7 +74,7 @@ class RemoteServer : AutoCloseable {
                     val connectionId = (connection.get("current_connection_id") as AtomicLong).getAndIncrement()
                     val c = targetSiteBootstrap.group(eventloop)
                         .channel(getChannelClass())
-                        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+                        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 20_000)
                         .option(ChannelOption.SO_KEEPALIVE, true)
                         .handler(object: ChannelInboundHandlerAdapter() {
                             override fun channelActive(ctx: ChannelHandlerContext) {
@@ -149,11 +151,12 @@ class RemoteServer : AutoCloseable {
 
         @JvmStatic
         fun main(args: Array<String>) {
-            val server = RemoteServer()
+            val config = System.getProperties().config(RemoteConfig::class.java)
+            val server = RemoteServer(config)
             Runtime.getRuntime().addShutdownHook(Thread {
                 server.close()
             })
-            System.`in`.read()
+            Thread.sleep(Long.MAX_VALUE)
         }
 
         internal fun createEventLoopGroup(threads: Int, name: String): EventLoopGroup {

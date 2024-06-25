@@ -6,9 +6,9 @@ import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 import java.net.InetSocketAddress
 
-class LocalServerInitializer(atProxyRemoteAddress: InetSocketAddress) : ChannelInitializer<SocketChannel>() {
+class LocalServerInitializer(key: String, atProxyRemoteAddress: InetSocketAddress) : ChannelInitializer<SocketChannel>() {
 
-    private val mixInServerHandler = SelectHandler(atProxyRemoteAddress)
+    private val mixInServerHandler = SelectHandler(key, atProxyRemoteAddress)
 
     @Throws(Exception::class)
     public override fun initChannel(ch: SocketChannel) {

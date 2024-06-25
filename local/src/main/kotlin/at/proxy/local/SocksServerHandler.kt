@@ -28,9 +28,9 @@ import java.io.IOException
 import java.net.InetSocketAddress
 
 @Sharable
-class SocksServerHandler(atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInboundHandler<SocksMessage>() {
+class SocksServerHandler(key: String, atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInboundHandler<SocksMessage>() {
 
-    private val socketServerConnectHandler = SocksServerConnectHandler(atProxyRemoteAddress)
+    private val socketServerConnectHandler = SocksServerConnectHandler(key, atProxyRemoteAddress)
 
     @Throws(Exception::class)
     public override fun channelRead0(ctx: ChannelHandlerContext, socksRequest: SocksMessage) {

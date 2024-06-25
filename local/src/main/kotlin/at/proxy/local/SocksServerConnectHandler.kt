@@ -39,10 +39,10 @@ import java.io.IOException
 import java.net.InetSocketAddress
 
 @Sharable
-class SocksServerConnectHandler(atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInboundHandler<SocksMessage>() {
+class SocksServerConnectHandler(key: String, atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInboundHandler<SocksMessage>() {
     private val client = client(atProxyRemoteAddress)
 
-    private val crypto = AESCrypto("hello".toByteArray())
+    private val crypto = AESCrypto(key.toByteArray())
 
     @Throws(Exception::class)
     public override fun channelRead0(ctx: ChannelHandlerContext, message: SocksMessage) {

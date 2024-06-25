@@ -9,8 +9,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class LocalProxyServer(private val config: Socks5ServerConfig) : AutoCloseable {
-    private val logger: Logger = LoggerFactory.getLogger(LocalProxyServer::class.java)
+class LocalServer(config: LocalConfig) : AutoCloseable {
+    private val logger: Logger = LoggerFactory.getLogger(LocalServer::class.java)
 
     private var serverBootstrap: ServerBootstrap
 
@@ -20,12 +20,11 @@ class LocalProxyServer(private val config: Socks5ServerConfig) : AutoCloseable {
 
     init {
         logger.info("Proxy Server starting...")
-
-        serverEventLoopGroup = NioEventLoopGroup(4)
+        serverEventLoopGroup = NioEventLoopGroup(Runtime.getRuntime().availableProcessors())
 
         serverBootstrap = ServerBootstrap()
             .channel(NioServerSocketChannel::class.java)
-            .childHandler(LocalServerInitializer(config.remoteEndpoint))
+            .childHandler(LocalServerInitializer(config.key, config.remoteEndpoint))
             .group(serverEventLoopGroup)
         acceptorChannel = serverBootstrap.bind(config.port).syncUninterruptibly().channel()
     }
@@ -40,12 +39,12 @@ class LocalProxyServer(private val config: Socks5ServerConfig) : AutoCloseable {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            val config = System.getProperties().config(Socks5ServerConfig::class.java)
-            val server = LocalProxyServer(config)
+            val config = System.getProperties().config(LocalConfig::class.java)
+            val server = LocalServer(config)
             Runtime.getRuntime().addShutdownHook(Thread {
                 server.close()
             })
-            System.`in`.read()
+            Thread.sleep(Long.MAX_VALUE)
         }
     }
 }
