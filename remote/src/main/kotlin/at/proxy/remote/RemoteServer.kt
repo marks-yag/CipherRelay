@@ -25,6 +25,7 @@ import ketty.core.protocol.RequestHeader
 import ketty.core.protocol.ResponseHeader
 import ketty.core.protocol.StatusCode
 import ketty.core.server.*
+import ketty.utils.MemoryLeakDetector
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
@@ -147,6 +148,13 @@ class RemoteServer(config: RemoteConfig) : AutoCloseable {
             Runtime.getRuntime().addShutdownHook(Thread {
                 server.close()
             })
+            val leakCheckInterval = System.getProperty("leakCheckInterval", "-1").toLong()
+            if (leakCheckInterval > 0) {
+                val detector = MemoryLeakDetector()
+                while (detector.count() == 0L) {
+                    Thread.sleep(leakCheckInterval)
+                }
+            }
             Thread.sleep(Long.MAX_VALUE)
         }
 

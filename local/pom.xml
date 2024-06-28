@@ -38,6 +38,12 @@
 
         <dependency>
             <groupId>com.github.marks-yag</groupId>
+            <artifactId>ketty-utils</artifactId>
+            <version>0.20.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.marks-yag</groupId>
             <artifactId>crypto</artifactId>
             <version>0.9.11</version>
         </dependency>

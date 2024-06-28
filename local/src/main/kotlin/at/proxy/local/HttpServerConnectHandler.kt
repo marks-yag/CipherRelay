@@ -58,7 +58,7 @@ class HttpServerConnectHandler(private val client: KettyClient, private val cryp
                         if (connect.isSuccessful()) {
                             val connection = Socks5Connection(connect.body.slice().readLong())
                             MixinServerUtils.relay(client, crypto, connect, ctx)
-                            val encrypt = crypto.encrypt(headData.readArray())
+                            val encrypt = headData.use { crypto.encrypt(it.readArray()) }
                             Unpooled.wrappedBuffer(connection.encode(), Unpooled.wrappedBuffer(encrypt)).use {
                                 client.send(AtProxyRequest.WRITE, it) { head ->
                                     if (!head.isSuccessful()) {

@@ -6,6 +6,7 @@ import io.netty.channel.Channel
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
+import ketty.utils.MemoryLeakDetector
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -44,6 +45,13 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
             Runtime.getRuntime().addShutdownHook(Thread {
                 server.close()
             })
+            val leakCheckInterval = System.getProperty("leakCheckInterval", "-1").toLong()
+            if (leakCheckInterval > 0) {
+                val detector = MemoryLeakDetector()
+                while (detector.count() == 0L) {
+                    Thread.sleep(leakCheckInterval)
+                }
+            }
             Thread.sleep(Long.MAX_VALUE)
         }
     }
