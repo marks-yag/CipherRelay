@@ -117,6 +117,11 @@ class RemoteServer(config: RemoteConfig) : AutoCloseable {
                         })
                     (connection.get("connections") as ConcurrentHashMap<Long, ChannelFuture>)[connectionId] = c
                 })
+                set(AtProxyRequest.DISCONNECT, KettyRequestHandler { connection, request, echo ->
+                    val connectionId = request.body.readLong()
+                    log.info("Disconnect: {}.", connectionId)
+                    (connection.get("connections") as ConcurrentHashMap<Long, ChannelFuture>).remove(connectionId)?.channel()?.close()
+                })
                 set(AtProxyRequest.WRITE, KettyRequestHandler { connection, request, echo ->
                     val connectionId = request.body.readLong()
                     log.debug("Received write request, connectionId: {}", connectionId)
