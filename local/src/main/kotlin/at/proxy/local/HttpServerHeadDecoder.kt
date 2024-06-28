@@ -64,7 +64,7 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
                 host = hostAndPort.getHost()
                 port = hostAndPort.getPort()
 
-                httpProxyRequestHead = HttpProxyRequestHead(host, port, "TUNNEL", protocolVersion, Unpooled.EMPTY_BUFFER)
+                httpProxyRequestHead = HttpProxyRequestHead(host, port, HttpProxyType.TUNNEL, protocolVersion, Unpooled.EMPTY_BUFFER)
             } else {
                 //http proxy
                 val url = URL(uri)
@@ -74,7 +74,7 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
                     port = 80
                 }
 
-                httpProxyRequestHead = HttpProxyRequestHead(host, port, "WEB", protocolVersion, `in`.resetReaderIndex())
+                httpProxyRequestHead = HttpProxyRequestHead(host, port, HttpProxyType.WEB, protocolVersion, `in`.resetReaderIndex())
             }
             ctx.pipeline().addLast(HttpServerConnectHandler(client, crypto)).remove(this)
             ctx.fireChannelRead(httpProxyRequestHead)

@@ -17,7 +17,7 @@ package at.proxy.local
 
 import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.Encoders.Companion.encode
-import at.proxy.protocol.Socks5Connection
+import at.proxy.protocol.Connection
 import com.github.yag.crypto.AESCrypto
 import io.netty.buffer.Unpooled
 import io.netty.channel.*
@@ -35,7 +35,7 @@ class HttpServerConnectHandler(private val client: KettyClient, private val cryp
         log.info("New http connection: {} {}. ", requestHead, requestHead.byteBuf.refCnt())
         Unpooled.wrappedBuffer((requestHead.host + ":" + requestHead.port).toByteArray()).use {
             when (requestHead.proxyType) {
-                "TUNNEL" -> {
+                HttpProxyType.TUNNEL -> {
                     client.send(AtProxyRequest.CONNECT, it) { connect ->
                         if (connect.isSuccessful()) {
                             inboundChannel.writeAndFlush(
@@ -52,11 +52,11 @@ class HttpServerConnectHandler(private val client: KettyClient, private val cryp
                     }
                 }
 
-                "WEB" -> {
+                HttpProxyType.WEB -> {
                     val headData = requestHead.byteBuf.retain()
                     client.send(AtProxyRequest.CONNECT, it) { connect ->
                         if (connect.isSuccessful()) {
-                            val connection = Socks5Connection(connect.body.slice().readLong())
+                            val connection = Connection(connect.body.slice().readLong())
                             MixinServerUtils.relay(client, crypto, connect, ctx)
                             val encrypt = headData.use { crypto.encrypt(it.readArray()) }
                             Unpooled.wrappedBuffer(connection.encode(), Unpooled.wrappedBuffer(encrypt)).use {

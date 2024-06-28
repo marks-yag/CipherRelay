@@ -16,8 +16,7 @@
 package at.proxy.local
 
 import at.proxy.protocol.AtProxyRequest
-import at.proxy.protocol.Encoders.Companion.encode
-import at.proxy.protocol.Socks5Connection
+import at.proxy.protocol.Connection
 import com.github.yag.crypto.AESCrypto
 import io.netty.buffer.Unpooled
 import io.netty.channel.*
@@ -28,10 +27,7 @@ import io.netty.handler.codec.socksx.v5.Socks5CommandRequest
 import io.netty.handler.codec.socksx.v5.Socks5CommandStatus
 import ketty.core.client.KettyClient
 import ketty.core.common.isSuccessful
-import ketty.core.common.readArray
-import ketty.core.common.status
 import ketty.core.common.use
-import ketty.core.protocol.StatusCode
 import org.slf4j.LoggerFactory
 import java.io.IOException
 
@@ -45,7 +41,7 @@ class SocksServerConnectHandler(private val client: KettyClient, private val cry
         Unpooled.wrappedBuffer((request.dstAddr() + ":" + request.dstPort()).toByteArray()).use {
             client.sendSync(AtProxyRequest.CONNECT, it).use { connect ->
                 if (connect.isSuccessful()) {
-                    val connection = Socks5Connection(connect.body.slice().readLong())
+                    val connection = Connection(connect.body.slice().readLong())
                     log.info("Connect to {}:{}, id:{}.", request.dstAddr(), request.dstPort(), connection)
                     ctx.channel().writeAndFlush(
                         DefaultSocks5CommandResponse(

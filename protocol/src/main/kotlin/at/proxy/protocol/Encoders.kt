@@ -8,7 +8,7 @@ class Encoders {
     companion object {
 
         @JvmStatic
-        fun Socks5Connection.encode(buf: ByteBuf = Unpooled.buffer()): ByteBuf {
+        fun Connection.encode(buf: ByteBuf = Unpooled.buffer()): ByteBuf {
             buf.writeLong(id)
             return buf
         }

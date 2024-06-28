@@ -2,7 +2,7 @@ package at.proxy.local
 
 import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.Encoders.Companion.encode
-import at.proxy.protocol.Socks5Connection
+import at.proxy.protocol.Connection
 import com.github.yag.crypto.AESCrypto
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
@@ -31,7 +31,7 @@ object MixinServerUtils {
         connect: Packet<ResponseHeader>,
         ctx: ChannelHandlerContext
     ) {
-        val connection = Socks5Connection(connect.body.slice().readLong())
+        val connection = Connection(connect.body.slice().readLong())
         connection.encode().use {
             client.send(AtProxyRequest.READ, it) { response ->
                 if (response.isSuccessful()) {

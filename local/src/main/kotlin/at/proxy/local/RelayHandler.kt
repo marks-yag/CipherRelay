@@ -2,7 +2,7 @@ package at.proxy.local
 
 import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.Encoders.Companion.encode
-import at.proxy.protocol.Socks5Connection
+import at.proxy.protocol.Connection
 import com.github.yag.crypto.AESCrypto
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
@@ -14,7 +14,7 @@ import ketty.core.common.use
 import org.slf4j.LoggerFactory
 import java.io.IOException
 
-class RelayHandler(private val connection: Socks5Connection, private val crypto: AESCrypto, private val kettyClient: KettyClient) : ChannelInboundHandlerAdapter() {
+class RelayHandler(private val connection: Connection, private val crypto: AESCrypto, private val kettyClient: KettyClient) : ChannelInboundHandlerAdapter() {
 
     override fun channelActive(ctx: ChannelHandlerContext) {
         ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
