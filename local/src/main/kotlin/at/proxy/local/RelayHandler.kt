@@ -1,8 +1,6 @@
 package at.proxy.local
 
-import at.proxy.local.SocksServerHandler.Companion
 import at.proxy.protocol.AtProxyRequest
-import at.proxy.protocol.Encoders
 import at.proxy.protocol.Encoders.Companion.encode
 import at.proxy.protocol.Socks5Connection
 import com.github.yag.crypto.AESCrypto

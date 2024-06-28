@@ -6,13 +6,7 @@ import config.config
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
-import io.netty.channel.Channel
-import io.netty.channel.ChannelFuture
-import io.netty.channel.ChannelFutureListener
-import io.netty.channel.ChannelHandlerContext
-import io.netty.channel.ChannelInboundHandlerAdapter
-import io.netty.channel.ChannelOption
-import io.netty.channel.EventLoopGroup
+import io.netty.channel.*
 import io.netty.channel.epoll.Epoll
 import io.netty.channel.epoll.EpollEventLoopGroup
 import io.netty.channel.epoll.EpollSocketChannel
@@ -23,7 +17,10 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.util.ReferenceCountUtil
 import io.netty.util.concurrent.DefaultThreadFactory
-import ketty.core.common.*
+import ketty.core.common.Packet
+import ketty.core.common.ok
+import ketty.core.common.readArray
+import ketty.core.common.status
 import ketty.core.protocol.RequestHeader
 import ketty.core.protocol.ResponseHeader
 import ketty.core.protocol.StatusCode
@@ -31,7 +28,6 @@ import ketty.core.server.*
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicLong
 
 class RemoteServer(config: RemoteConfig) : AutoCloseable {
@@ -119,11 +115,6 @@ class RemoteServer(config: RemoteConfig) : AutoCloseable {
                             }
                         })
                     (connection.get("connections") as ConcurrentHashMap<Long, ChannelFuture>)[connectionId] = c
-                })
-                set(AtProxyRequest.DISCONNECT, KettyRequestHandler { connection, request, echo ->
-                    val connectionId = request.body.readLong()
-                    log.info("Disconnect: {}.", connectionId)
-                    (connection.get("connections") as ConcurrentHashMap<Long, ChannelFuture>).remove(connectionId)?.channel()?.close()
                 })
                 set(AtProxyRequest.WRITE, KettyRequestHandler { connection, request, echo ->
                     val connectionId = request.body.readLong()

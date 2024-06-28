@@ -15,9 +15,7 @@
  */
 package at.proxy.local
 
-import at.proxy.local.SocksServerHandler.Companion
 import at.proxy.protocol.AtProxyRequest
-import at.proxy.protocol.Encoders
 import at.proxy.protocol.Encoders.Companion.encode
 import at.proxy.protocol.Socks5Connection
 import com.github.yag.crypto.AESCrypto
@@ -28,7 +26,7 @@ import io.netty.handler.codec.socksx.SocksMessage
 import io.netty.handler.codec.socksx.v5.DefaultSocks5CommandResponse
 import io.netty.handler.codec.socksx.v5.Socks5CommandRequest
 import io.netty.handler.codec.socksx.v5.Socks5CommandStatus
-import ketty.core.client.client
+import ketty.core.client.KettyClient
 import ketty.core.common.isSuccessful
 import ketty.core.common.readArray
 import ketty.core.common.status
@@ -36,13 +34,9 @@ import ketty.core.common.use
 import ketty.core.protocol.StatusCode
 import org.slf4j.LoggerFactory
 import java.io.IOException
-import java.net.InetSocketAddress
 
 @Sharable
-class SocksServerConnectHandler(key: String, atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInboundHandler<SocksMessage>() {
-    private val client = client(atProxyRemoteAddress)
-
-    private val crypto = AESCrypto(key.toByteArray())
+class SocksServerConnectHandler(private val client: KettyClient, private val crypto: AESCrypto) : SimpleChannelInboundHandler<SocksMessage>() {
 
     @Throws(Exception::class)
     public override fun channelRead0(ctx: ChannelHandlerContext, message: SocksMessage) {
@@ -61,23 +55,7 @@ class SocksServerConnectHandler(key: String, atProxyRemoteAddress: InetSocketAdd
                             request.dstPort()
                         )
                     )
-                    connection.encode().use {
-                        client.send(AtProxyRequest.READ, it) { response ->
-                            if (response.isSuccessful()) {
-                                log.debug("Received read response, length: {}.", response.body.readableBytes())
-                                if (response.status() == StatusCode.PARTIAL_CONTENT) {
-                                    val decrypt = crypto.decrypt(response.body.readArray())
-                                    ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(decrypt))
-                                } else {
-                                    ctx.channel().close()
-                                }
-                            } else {
-                                log.warn("Read failed.")
-                                ctx.channel().close()
-                            }
-                        }
-                    }
-                    ctx.channel().pipeline().addLast(RelayHandler(connection, crypto, client))
+                    MixinServerUtils.relay(client, crypto, connect, ctx)
                 } else {
                     ctx.channel().writeAndFlush(
                         DefaultSocks5CommandResponse(

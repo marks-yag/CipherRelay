@@ -15,7 +15,7 @@
  */
 package at.proxy.local
 
-import at.proxy.local.RelayHandler.Companion
+import com.github.yag.crypto.AESCrypto
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.ChannelHandlerContext
@@ -23,14 +23,14 @@ import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.socksx.SocksMessage
 import io.netty.handler.codec.socksx.SocksVersion
 import io.netty.handler.codec.socksx.v5.*
+import ketty.core.client.KettyClient
 import org.slf4j.LoggerFactory
 import java.io.IOException
-import java.net.InetSocketAddress
 
 @Sharable
-class SocksServerHandler(key: String, atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInboundHandler<SocksMessage>() {
+class SocksServerHandler(client: KettyClient, crypto: AESCrypto) : SimpleChannelInboundHandler<SocksMessage>() {
 
-    private val socketServerConnectHandler = SocksServerConnectHandler(key, atProxyRemoteAddress)
+    private val socketServerConnectHandler = SocksServerConnectHandler(client, crypto)
 
     @Throws(Exception::class)
     public override fun channelRead0(ctx: ChannelHandlerContext, socksRequest: SocksMessage) {
