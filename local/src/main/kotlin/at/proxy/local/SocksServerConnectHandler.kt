@@ -16,7 +16,7 @@
 package at.proxy.local
 
 import at.proxy.protocol.AtProxyRequest
-import at.proxy.protocol.Connection
+import at.proxy.protocol.VirtualChannel
 import com.github.yag.crypto.AESCrypto
 import io.netty.buffer.Unpooled
 import io.netty.channel.*
@@ -41,8 +41,8 @@ class SocksServerConnectHandler(private val client: KettyClient, private val cry
         Unpooled.wrappedBuffer((request.dstAddr() + ":" + request.dstPort()).toByteArray()).use {
             client.sendSync(AtProxyRequest.CONNECT, it).use { connect ->
                 if (connect.isSuccessful()) {
-                    val connection = Connection(connect.body.slice().readLong())
-                    log.info("Connect to {}:{}, id:{}.", request.dstAddr(), request.dstPort(), connection)
+                    val vc = VirtualChannel(connect.body.slice().readLong())
+                    log.info("Connect to {}:{}, id:{}.", request.dstAddr(), request.dstPort(), vc)
                     ctx.channel().writeAndFlush(
                         DefaultSocks5CommandResponse(
                             Socks5CommandStatus.SUCCESS,

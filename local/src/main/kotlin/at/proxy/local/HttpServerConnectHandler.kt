@@ -17,7 +17,7 @@ package at.proxy.local
 
 import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.Encoders.Companion.encode
-import at.proxy.protocol.Connection
+import at.proxy.protocol.VirtualChannel
 import com.github.yag.crypto.AESCrypto
 import io.netty.buffer.Unpooled
 import io.netty.channel.*
@@ -56,10 +56,10 @@ class HttpServerConnectHandler(private val client: KettyClient, private val cryp
                     val headData = requestHead.byteBuf.retain()
                     client.send(AtProxyRequest.CONNECT, it) { connect ->
                         if (connect.isSuccessful()) {
-                            val connection = Connection(connect.body.slice().readLong())
+                            val vc = VirtualChannel(connect.body.slice().readLong())
                             MixinServerUtils.relay(client, crypto, connect, ctx)
                             val encrypt = headData.use { crypto.encrypt(it.readArray()) }
-                            Unpooled.wrappedBuffer(connection.encode(), Unpooled.wrappedBuffer(encrypt)).use {
+                            Unpooled.wrappedBuffer(vc.encode(), Unpooled.wrappedBuffer(encrypt)).use {
                                 client.send(AtProxyRequest.WRITE, it) { head ->
                                     if (!head.isSuccessful()) {
                                         ctx.close()

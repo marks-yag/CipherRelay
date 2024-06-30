@@ -2,7 +2,7 @@ package at.proxy.local
 
 import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.Encoders.Companion.encode
-import at.proxy.protocol.Connection
+import at.proxy.protocol.VirtualChannel
 import com.github.yag.crypto.AESCrypto
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
@@ -14,7 +14,7 @@ import ketty.core.common.use
 import org.slf4j.LoggerFactory
 import java.io.IOException
 
-class RelayHandler(private val connection: Connection, private val crypto: AESCrypto, private val kettyClient: KettyClient) : ChannelInboundHandlerAdapter() {
+class RelayHandler(private val vc: VirtualChannel, private val crypto: AESCrypto, private val kettyClient: KettyClient) : ChannelInboundHandlerAdapter() {
 
     override fun channelActive(ctx: ChannelHandlerContext) {
         ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
@@ -25,19 +25,19 @@ class RelayHandler(private val connection: Connection, private val crypto: AESCr
             val body = msg.use {
                 Unpooled.wrappedBuffer(crypto.encrypt(it.readArray()))
             }
-            Unpooled.wrappedBuffer(connection.encode(), body).use {
+            Unpooled.wrappedBuffer(vc.encode(), body).use {
                 kettyClient.send(AtProxyRequest.WRITE, it) {
-                    log.debug("Send write request done for {}.", connection)
+                    log.debug("Send write request done for {}.", vc)
                 }
             }
         }
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext) {
-        log.debug("Channel inactive: {}.", connection)
-        connection.encode().use {
+        log.debug("Channel inactive: {}.", vc)
+        vc.encode().use {
             kettyClient.send(AtProxyRequest.DISCONNECT, it) {
-                log.debug("Connection close: {}.", connection)
+                log.debug("Connection close: {}.", vc)
             }
         }
     }
@@ -45,11 +45,11 @@ class RelayHandler(private val connection: Connection, private val crypto: AESCr
     override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
         when (cause) {
             is IOException -> {
-                log.debug("IO failed {}.", connection)
+                log.debug("IO failed {}.", vc)
             }
 
             else -> {
-                log.warn("Oops! {}.", connection, cause)
+                log.warn("Oops! {}.", vc, cause)
             }
         }
     }

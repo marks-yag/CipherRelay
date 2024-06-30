@@ -2,7 +2,7 @@ package at.proxy.local
 
 import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.Encoders.Companion.encode
-import at.proxy.protocol.Connection
+import at.proxy.protocol.VirtualChannel
 import com.github.yag.crypto.AESCrypto
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
@@ -31,8 +31,8 @@ object MixinServerUtils {
         connect: Packet<ResponseHeader>,
         ctx: ChannelHandlerContext
     ) {
-        val connection = Connection(connect.body.slice().readLong())
-        connection.encode().use {
+        val vc = VirtualChannel(connect.body.slice().readLong())
+        vc.encode().use {
             client.send(AtProxyRequest.READ, it) { response ->
                 if (response.isSuccessful()) {
                     log.debug("Received read response, length: {}.", response.body.readableBytes())
@@ -48,7 +48,7 @@ object MixinServerUtils {
                 }
             }
         }
-        ctx.channel().pipeline().addLast(RelayHandler(connection, crypto, client))
+        ctx.channel().pipeline().addLast(RelayHandler(vc, crypto, client))
     }
 
     private val log = LoggerFactory.getLogger(MixinServerUtils::class.java)

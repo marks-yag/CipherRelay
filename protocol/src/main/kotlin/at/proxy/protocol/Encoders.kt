@@ -8,7 +8,7 @@ class Encoders {
     companion object {
 
         @JvmStatic
-        fun Connection.encode(buf: ByteBuf = Unpooled.buffer()): ByteBuf {
+        fun VirtualChannel.encode(buf: ByteBuf = Unpooled.buffer()): ByteBuf {
             buf.writeLong(id)
             return buf
         }
