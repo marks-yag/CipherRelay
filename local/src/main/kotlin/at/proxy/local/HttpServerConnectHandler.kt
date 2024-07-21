@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory
 @Sharable
 class HttpServerConnectHandler(private val client: KettyClient, private val crypto: AESCrypto) : SimpleChannelInboundHandler<HttpProxyRequestHead>() {
 
-    @Throws(Exception::class)
     public override fun channelRead0(ctx: ChannelHandlerContext, requestHead: HttpProxyRequestHead) {
         val inboundChannel = ctx.channel()
         log.info("New http connection: {} {}. ", requestHead, requestHead.byteBuf.refCnt())
@@ -74,14 +73,7 @@ class HttpServerConnectHandler(private val client: KettyClient, private val cryp
         }
     }
 
-    @Throws(Exception::class)
-    override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-        MixinServerUtils.closeOnFlush(ctx.channel())
-    }
-
     companion object {
         private val log = LoggerFactory.getLogger(HttpServerConnectHandler::class.java)
-
-
     }
 }

@@ -62,19 +62,6 @@ class SocksServerConnectHandler(private val client: KettyClient, private val cry
         }
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-        when (cause) {
-            is IOException -> {
-                log.debug("IO failed.", cause)
-            }
-
-            else -> {
-                log.warn("Oops!", cause)
-            }
-        }
-    }
-
     companion object {
         private val log = LoggerFactory.getLogger(SocksServerConnectHandler::class.java)
     }
