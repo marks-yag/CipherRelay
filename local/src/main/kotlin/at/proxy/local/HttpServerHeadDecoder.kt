@@ -50,7 +50,7 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
     override fun channelRead0(ctx: ChannelHandlerContext, `in`: ByteBuf) {
         val seq: AppendableCharSequence? = headLineByteProcessor.parse(`in`)
         checkNotNull(seq)
-        if (seq.get(seq.length - 1).code.toByte() == HttpConstants.LF) {
+        if (seq.last().code.toByte() == HttpConstants.LF) {
             val httpProxyRequestHead: HttpProxyRequestHead
             val splitInitialLine = splitInitialLine(seq)
             val method = splitInitialLine[0]
