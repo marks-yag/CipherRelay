@@ -20,25 +20,17 @@ class SelectHandler(key: String, atProxyRemoteAddress: InetSocketAddress) : Simp
     private val socksServerHandler = SocksServerHandler(client, crypto)
 
     override fun channelRead0(ctx: ChannelHandlerContext, msg: ByteBuf) {
-        val readerIndex = msg.readerIndex()
-        if (msg.writerIndex() == readerIndex) {
-            return
-        }
-
+        if (msg.readableBytes() == 0) return
         val p = ctx.pipeline()
-        val versionVal = msg.getByte(readerIndex)
+        val versionVal = msg.slice().readByte()
 
         val version = SocksVersion.valueOf(versionVal)
         if (version == SocksVersion.SOCKS4a || version == SocksVersion.SOCKS5) {
-            p.addLast(
-                SocksPortUnificationServerHandler(),
-                socksServerHandler
-            ).remove(this)
+            p.addLast(SocksPortUnificationServerHandler(), socksServerHandler)
         } else {
-            //http/tunnel proxy
-            p.addLast(HttpServerHeadDecoder(client, crypto)).remove(this)
+            p.addLast(HttpServerHeadDecoder(client, crypto))
         }
-        msg.retain()
-        ctx.fireChannelRead(msg)
+        p.remove(this)
+        ctx.fireChannelRead(msg.retain())
     }
 }

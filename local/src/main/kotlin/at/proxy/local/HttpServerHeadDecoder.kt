@@ -12,6 +12,8 @@ import io.netty.handler.codec.http.HttpMethod
 import io.netty.util.ByteProcessor
 import io.netty.util.internal.AppendableCharSequence
 import ketty.core.client.KettyClient
+import org.slf4j.LoggerFactory
+import java.net.URI
 import java.net.URL
 
 class HttpServerHeadDecoder(private val client: KettyClient, private val crypto: AESCrypto) : SimpleChannelInboundHandler<ByteBuf>() {
@@ -51,11 +53,9 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
         val seq: AppendableCharSequence? = headLineByteProcessor.parse(`in`)
         checkNotNull(seq)
         if (seq.last().code.toByte() == HttpConstants.LF) {
+            LOG.info("Http read: {}", seq)
             val httpProxyRequestHead: HttpProxyRequestHead
-            val splitInitialLine = splitInitialLine(seq)
-            val method = splitInitialLine[0]
-            val uri = splitInitialLine[1]
-            val protocolVersion = splitInitialLine[2]
+            val (method, uri, protocolVersion) = splitInitialLine(seq)
             val host: String
             var port: Int
             if (HttpMethod.CONNECT.name() == method) {
@@ -67,7 +67,7 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
                 httpProxyRequestHead = HttpProxyRequestHead(host, port, HttpProxyType.TUNNEL, protocolVersion, Unpooled.EMPTY_BUFFER)
             } else {
                 //http proxy
-                val url = URL(uri)
+                val url = URI.create(uri).toURL()
                 host = url.host
                 port = url.port
                 if (port == -1) {
@@ -78,6 +78,8 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
             }
             ctx.pipeline().addLast(HttpServerConnectHandler(client, crypto)).remove(this)
             ctx.fireChannelRead(httpProxyRequestHead)
+        } else {
+            LOG.info("wtf: {}.", seq)
         }
     }
 
@@ -158,5 +160,7 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
         private fun isOWS(ch: Char): Boolean {
             return ch == ' ' || ch == 0x09.toChar()
         }
+
+        private val LOG = LoggerFactory.getLogger(HttpServerConnectHandler::class.java)
     }
 }
