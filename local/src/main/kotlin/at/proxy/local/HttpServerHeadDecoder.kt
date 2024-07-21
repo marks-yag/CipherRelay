@@ -13,9 +13,7 @@ import io.netty.util.ByteProcessor
 import io.netty.util.internal.AppendableCharSequence
 import ketty.core.client.KettyClient
 import org.slf4j.LoggerFactory
-import java.net.SocketPermission
 import java.net.URI
-import java.nio.charset.Charset
 import java.util.regex.Pattern
 
 class HttpServerHeadDecoder(private val client: KettyClient, private val crypto: AESCrypto) : SimpleChannelInboundHandler<ByteBuf>() {
