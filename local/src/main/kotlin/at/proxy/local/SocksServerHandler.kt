@@ -35,7 +35,7 @@ class SocksServerHandler(client: KettyClient, crypto: AESCrypto) : SimpleChannel
     @Throws(Exception::class)
     public override fun channelRead0(ctx: ChannelHandlerContext, socksRequest: SocksMessage) {
         if (socksRequest.version() != SocksVersion.SOCKS5) {
-            ctx.writeAndFlush(Unpooled.wrappedBuffer("Unsupported protocol version。".toByteArray()))
+            ctx.writeAndFlush(Unpooled.wrappedBuffer("Unsupported protocol version.".toByteArray()))
             return
         }
         if (socksRequest is Socks5InitialRequest) {
