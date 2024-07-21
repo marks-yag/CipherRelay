@@ -4,7 +4,6 @@ import com.github.yag.crypto.AESCrypto
 import com.google.common.net.HostAndPort
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
-import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.http.HttpConstants
@@ -14,7 +13,6 @@ import io.netty.util.internal.AppendableCharSequence
 import ketty.core.client.KettyClient
 import org.slf4j.LoggerFactory
 import java.net.URI
-import java.net.URL
 
 class HttpServerHeadDecoder(private val client: KettyClient, private val crypto: AESCrypto) : SimpleChannelInboundHandler<ByteBuf>() {
     private val headLineByteProcessor = HeadLineByteProcessor()
@@ -49,8 +47,8 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
     }
 
     @Throws(Exception::class)
-    override fun channelRead0(ctx: ChannelHandlerContext, `in`: ByteBuf) {
-        val seq: AppendableCharSequence? = headLineByteProcessor.parse(`in`)
+    override fun channelRead0(ctx: ChannelHandlerContext, buf: ByteBuf) {
+        val seq: AppendableCharSequence? = headLineByteProcessor.parse(buf)
         checkNotNull(seq)
         if (seq.last().code.toByte() == HttpConstants.LF) {
             LOG.info("Http read: {}", seq)
@@ -74,7 +72,7 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
                     port = 80
                 }
 
-                httpProxyRequestHead = HttpProxyRequestHead(host, port, HttpProxyType.WEB, protocolVersion, `in`.resetReaderIndex())
+                httpProxyRequestHead = HttpProxyRequestHead(host, port, HttpProxyType.WEB, protocolVersion, buf.resetReaderIndex())
             }
             ctx.pipeline().addLast(HttpServerConnectHandler(client, crypto)).remove(this)
             ctx.fireChannelRead(httpProxyRequestHead)
@@ -134,20 +132,6 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
             return c == ' ' || c == 0x09.toChar() || c == 0x0B.toChar() || c == 0x0C.toChar() || c == 0x0D.toChar()
         }
 
-        private fun findNonWhitespace(sb: AppendableCharSequence, offset: Int, validateOWS: Boolean): Int {
-            for (result in offset until sb.length) {
-                val c: Char = sb.charAtUnsafe(result)
-                if (!Character.isWhitespace(c)) {
-                    return result
-                } else require(!(validateOWS && !isOWS(c))) {
-                    // Only OWS is supported for whitespace
-                    "Invalid separator, only a single space or horizontal tab allowed," +
-                            " but received a '" + c + "'"
-                }
-            }
-            return sb.length
-        }
-
         private fun findEndOfString(sb: AppendableCharSequence): Int {
             for (result in sb.length - 1 downTo 1) {
                 if (!Character.isWhitespace(sb.charAtUnsafe(result))) {
@@ -155,10 +139,6 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
                 }
             }
             return 0
-        }
-
-        private fun isOWS(ch: Char): Boolean {
-            return ch == ' ' || ch == 0x09.toChar()
         }
 
         private val LOG = LoggerFactory.getLogger(HttpServerConnectHandler::class.java)
