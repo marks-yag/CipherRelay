@@ -30,7 +30,6 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
             return seq
         }
 
-        @Throws(Exception::class)
         override fun process(value: Byte): Boolean {
             val nextByte = (value.toInt() and 0xFF).toChar()
             if (nextByte.code.toByte() == HttpConstants.LF) {
@@ -46,7 +45,6 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
         }
     }
 
-    @Throws(Exception::class)
     override fun channelRead0(ctx: ChannelHandlerContext, buf: ByteBuf) {
         val seq: AppendableCharSequence? = headLineByteProcessor.parse(buf)
         checkNotNull(seq)
