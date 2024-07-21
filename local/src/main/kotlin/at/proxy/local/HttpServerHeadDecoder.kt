@@ -17,35 +17,6 @@ import java.net.URI
 import java.util.regex.Pattern
 
 class HttpServerHeadDecoder(private val client: KettyClient, private val crypto: AESCrypto) : SimpleChannelInboundHandler<ByteBuf>() {
-    private val headLineByteProcessor = HeadLineByteProcessor()
-
-    private inner class HeadLineByteProcessor : ByteProcessor {
-        private val seq: AppendableCharSequence = AppendableCharSequence(4096)
-
-        fun parse(buffer: ByteBuf): AppendableCharSequence? {
-            seq.reset()
-            val i: Int = buffer.forEachByte(this)
-            if (i == -1) {
-                return null
-            }
-            buffer.readerIndex(i + 1)
-            return seq
-        }
-
-        override fun process(value: Byte): Boolean {
-            val nextByte = (value.toInt() and 0xFF).toChar()
-            if (nextByte.code.toByte() == HttpConstants.LF) {
-                val len: Int = seq.length
-                if (len >= 1 && seq.charAtUnsafe(len - 1).code.toByte() == HttpConstants.CR) {
-                    seq.append(nextByte)
-                }
-                return false
-            }
-            //continue loop byte
-            seq.append(nextByte)
-            return true
-        }
-    }
 
     override fun channelRead0(ctx: ChannelHandlerContext, buf: ByteBuf) {
         val idx = ByteBufUtil.indexOf(CRLF.slice(), buf)
@@ -53,27 +24,20 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
         val data = buf.slice(0, idx)
         val seq = data.toString(Charsets.UTF_8)
         LOG.info("Http read: {}", seq)
-        val httpProxyRequestHead: HttpProxyRequestHead
+
         val (method, uri, protocolVersion) = seq.split(SP)
-        val host: String
-        var port: Int
-        if (HttpMethod.CONNECT.name() == method) {
-            //https tunnel proxy
-            val hostAndPort: HostAndPort = HostAndPort.fromString(uri)
-            host = hostAndPort.getHost()
-            port = hostAndPort.getPort()
-
-            httpProxyRequestHead = HttpProxyRequestHead(host, port, HttpProxyType.TUNNEL, protocolVersion, Unpooled.EMPTY_BUFFER)
-        } else {
-            //http proxy
-            val url = URI.create(uri).toURL()
-            host = url.host
-            port = url.port
-            if (port == -1) {
-                port = 80
+        val httpProxyRequestHead = when (method) {
+            HttpMethod.CONNECT.name() -> {
+                //https tunnel proxy
+                val hostAndPort = HostAndPort.fromString(uri)
+                HttpProxyRequestHead(hostAndPort.host, hostAndPort.port, HttpProxyType.TUNNEL, protocolVersion, Unpooled.EMPTY_BUFFER)
             }
-
-            httpProxyRequestHead = HttpProxyRequestHead(host, port, HttpProxyType.WEB, protocolVersion, buf.resetReaderIndex())
+            else -> {
+                LOG.info("method: {}", method);
+                //http proxy
+                val url = URI.create(uri).toURL()
+                HttpProxyRequestHead(url.host, if (url.port == -1) 80 else url.port, HttpProxyType.WEB, protocolVersion, buf.resetReaderIndex())
+            }
         }
         ctx.pipeline().addLast(HttpServerConnectHandler(client, crypto)).remove(this)
         ctx.fireChannelRead(httpProxyRequestHead)
