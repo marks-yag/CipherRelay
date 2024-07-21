@@ -40,9 +40,7 @@ class HttpServerConnectHandler(private val client: KettyClient, private val cryp
                         if (connect.isSuccessful()) {
                             inboundChannel.writeAndFlush(
                                 Unpooled.wrappedBuffer(
-                                    """${requestHead.protocolVersion} 200 Connection Established
-
-""".toByteArray()
+                                    "${requestHead.protocolVersion} 200 Connection Established\n\n".toByteArray()
                                 )
                             )
                             MixinServerUtils.relay(client, crypto, connect, ctx)
@@ -71,10 +69,6 @@ class HttpServerConnectHandler(private val client: KettyClient, private val cryp
                             ctx.close()
                         }
                     }
-                }
-
-                else -> {
-                    ctx.close()
                 }
             }
         }

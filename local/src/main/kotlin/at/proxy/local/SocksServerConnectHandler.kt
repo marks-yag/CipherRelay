@@ -34,7 +34,6 @@ import java.io.IOException
 @Sharable
 class SocksServerConnectHandler(private val client: KettyClient, private val crypto: AESCrypto) : SimpleChannelInboundHandler<SocksMessage>() {
 
-    @Throws(Exception::class)
     public override fun channelRead0(ctx: ChannelHandlerContext, message: SocksMessage) {
         val request = message as Socks5CommandRequest
         log.info("New socks5 connection: {}:{}.", request.dstAddr(), request.dstPort())
@@ -63,6 +62,7 @@ class SocksServerConnectHandler(private val client: KettyClient, private val cry
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
         when (cause) {
             is IOException -> {
