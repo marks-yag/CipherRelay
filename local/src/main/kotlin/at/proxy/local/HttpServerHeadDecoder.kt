@@ -3,6 +3,7 @@ package at.proxy.local
 import com.github.yag.crypto.AESCrypto
 import com.google.common.net.HostAndPort
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
@@ -12,7 +13,10 @@ import io.netty.util.ByteProcessor
 import io.netty.util.internal.AppendableCharSequence
 import ketty.core.client.KettyClient
 import org.slf4j.LoggerFactory
+import java.net.SocketPermission
 import java.net.URI
+import java.nio.charset.Charset
+import java.util.regex.Pattern
 
 class HttpServerHeadDecoder(private val client: KettyClient, private val crypto: AESCrypto) : SimpleChannelInboundHandler<ByteBuf>() {
     private val headLineByteProcessor = HeadLineByteProcessor()
@@ -46,98 +50,44 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
     }
 
     override fun channelRead0(ctx: ChannelHandlerContext, buf: ByteBuf) {
-        val seq: AppendableCharSequence? = headLineByteProcessor.parse(buf)
-        checkNotNull(seq)
-        if (seq.last().code.toByte() == HttpConstants.LF) {
-            LOG.info("Http read: {}", seq)
-            val httpProxyRequestHead: HttpProxyRequestHead
-            val (method, uri, protocolVersion) = splitInitialLine(seq)
-            val host: String
-            var port: Int
-            if (HttpMethod.CONNECT.name() == method) {
-                //https tunnel proxy
-                val hostAndPort: HostAndPort = HostAndPort.fromString(uri)
-                host = hostAndPort.getHost()
-                port = hostAndPort.getPort()
+        val idx = ByteBufUtil.indexOf(CRLF.slice(), buf)
+        check(idx > 0) //TODO what if else
+        val data = buf.slice(0, idx)
+        val seq = data.toString(Charsets.UTF_8)
+        LOG.info("Http read: {}", seq)
+        val httpProxyRequestHead: HttpProxyRequestHead
+        val (method, uri, protocolVersion) = seq.split(SP)
+        val host: String
+        var port: Int
+        if (HttpMethod.CONNECT.name() == method) {
+            //https tunnel proxy
+            val hostAndPort: HostAndPort = HostAndPort.fromString(uri)
+            host = hostAndPort.getHost()
+            port = hostAndPort.getPort()
 
-                httpProxyRequestHead = HttpProxyRequestHead(host, port, HttpProxyType.TUNNEL, protocolVersion, Unpooled.EMPTY_BUFFER)
-            } else {
-                //http proxy
-                val url = URI.create(uri).toURL()
-                host = url.host
-                port = url.port
-                if (port == -1) {
-                    port = 80
-                }
-
-                httpProxyRequestHead = HttpProxyRequestHead(host, port, HttpProxyType.WEB, protocolVersion, buf.resetReaderIndex())
-            }
-            ctx.pipeline().addLast(HttpServerConnectHandler(client, crypto)).remove(this)
-            ctx.fireChannelRead(httpProxyRequestHead)
+            httpProxyRequestHead = HttpProxyRequestHead(host, port, HttpProxyType.TUNNEL, protocolVersion, Unpooled.EMPTY_BUFFER)
         } else {
-            LOG.info("wtf: {}.", seq)
+            //http proxy
+            val url = URI.create(uri).toURL()
+            host = url.host
+            port = url.port
+            if (port == -1) {
+                port = 80
+            }
+
+            httpProxyRequestHead = HttpProxyRequestHead(host, port, HttpProxyType.WEB, protocolVersion, buf.resetReaderIndex())
         }
+        ctx.pipeline().addLast(HttpServerConnectHandler(client, crypto)).remove(this)
+        ctx.fireChannelRead(httpProxyRequestHead)
     }
 
     companion object {
-        private fun splitInitialLine(sb: AppendableCharSequence): Array<String> {
-            val aEnd: Int
-            val bEnd: Int
 
-            val aStart = findNonSPLenient(sb, 0)
-            aEnd = findSPLenient(sb, aStart)
+        // See https://tools.ietf.org/html/rfc7230#section-3.5
+        private val SP = Pattern.compile("[\u0020\u0009\u000b\u000c\u000d]")
 
-            val bStart = findNonSPLenient(sb, aEnd)
-            bEnd = findSPLenient(sb, bStart)
+        private val CRLF = Unpooled.wrappedBuffer(byteArrayOf(HttpConstants.CR, HttpConstants.LF))
 
-            val cStart = findNonSPLenient(sb, bEnd)
-            val cEnd = findEndOfString(sb)
-
-            return arrayOf(
-                sb.subStringUnsafe(aStart, aEnd),
-                sb.subStringUnsafe(bStart, bEnd),
-                if (cStart < cEnd) sb.subStringUnsafe(cStart, cEnd) else ""
-            )
-        }
-
-        private fun findNonSPLenient(sb: AppendableCharSequence, offset: Int): Int {
-            for (result in offset until sb.length) {
-                val c: Char = sb.charAtUnsafe(result)
-                // See https://tools.ietf.org/html/rfc7230#section-3.5
-                if (isSPLenient(c)) {
-                    continue
-                }
-                require(!Character.isWhitespace(c)) {
-                    // Any other whitespace delimiter is invalid
-                    "Invalid separator"
-                }
-                return result
-            }
-            return sb.length
-        }
-
-        private fun findSPLenient(sb: AppendableCharSequence, offset: Int): Int {
-            for (result in offset until sb.length) {
-                if (isSPLenient(sb.charAtUnsafe(result))) {
-                    return result
-                }
-            }
-            return sb.length
-        }
-
-        private fun isSPLenient(c: Char): Boolean {
-            // See https://tools.ietf.org/html/rfc7230#section-3.5
-            return c == ' ' || c == 0x09.toChar() || c == 0x0B.toChar() || c == 0x0C.toChar() || c == 0x0D.toChar()
-        }
-
-        private fun findEndOfString(sb: AppendableCharSequence): Int {
-            for (result in sb.length - 1 downTo 1) {
-                if (!Character.isWhitespace(sb.charAtUnsafe(result))) {
-                    return result + 1
-                }
-            }
-            return 0
-        }
 
         private val LOG = LoggerFactory.getLogger(HttpServerConnectHandler::class.java)
     }
