@@ -1,6 +1,7 @@
 package at.proxy.local
 
 import com.github.yag.crypto.AESCrypto
+import io.micrometer.core.instrument.MeterRegistry
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.ChannelHandlerContext
@@ -11,13 +12,13 @@ import ketty.core.client.client
 import java.net.InetSocketAddress
 
 @Sharable
-class SelectHandler(key: String, atProxyRemoteAddress: InetSocketAddress) : SimpleChannelInboundHandler<ByteBuf>() {
+class SelectHandler(key: String, atProxyRemoteAddress: InetSocketAddress, private val registry: MeterRegistry) : SimpleChannelInboundHandler<ByteBuf>() {
 
     private val client = client(atProxyRemoteAddress)
 
     private val crypto = AESCrypto(key.toByteArray())
 
-    private val socksServerHandler = SocksServerHandler(client, crypto)
+    private val socksServerHandler = SocksServerHandler(client, crypto, registry)
 
     override fun channelRead0(ctx: ChannelHandlerContext, msg: ByteBuf) {
         if (msg.readableBytes() == 0) return
@@ -28,7 +29,7 @@ class SelectHandler(key: String, atProxyRemoteAddress: InetSocketAddress) : Simp
         if (version == SocksVersion.SOCKS4a || version == SocksVersion.SOCKS5) {
             p.addLast(SocksPortUnificationServerHandler(), socksServerHandler)
         } else {
-            p.addLast(HttpServerHeadDecoder(client, crypto))
+            p.addLast(HttpServerHeadDecoder(client, crypto, registry))
         }
         p.remove(this)
         ctx.fireChannelRead(msg.retain())

@@ -18,6 +18,7 @@ package at.proxy.local
 import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.VirtualChannel
 import com.github.yag.crypto.AESCrypto
+import io.micrometer.core.instrument.MeterRegistry
 import io.netty.buffer.Unpooled
 import io.netty.channel.*
 import io.netty.channel.ChannelHandler.Sharable
@@ -32,7 +33,7 @@ import org.slf4j.LoggerFactory
 import java.io.IOException
 
 @Sharable
-class SocksServerConnectHandler(private val client: KettyClient, private val crypto: AESCrypto) : SimpleChannelInboundHandler<SocksMessage>() {
+class SocksServerConnectHandler(private val client: KettyClient, private val crypto: AESCrypto, private val registry: MeterRegistry) : SimpleChannelInboundHandler<SocksMessage>() {
 
     public override fun channelRead0(ctx: ChannelHandlerContext, message: SocksMessage) {
         val request = message as Socks5CommandRequest
@@ -50,7 +51,7 @@ class SocksServerConnectHandler(private val client: KettyClient, private val cry
                             request.dstPort()
                         )
                     )
-                    MixinServerUtils.relay(client, crypto, connect, ctx)
+                    MixinServerUtils.relay(client, crypto, connect, ctx, registry)
                 } else {
                     ctx.channel().writeAndFlush(
                         DefaultSocks5CommandResponse(

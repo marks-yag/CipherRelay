@@ -19,6 +19,7 @@ import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.Encoders.Companion.encode
 import at.proxy.protocol.VirtualChannel
 import com.github.yag.crypto.AESCrypto
+import io.micrometer.core.instrument.MeterRegistry
 import io.netty.buffer.Unpooled
 import io.netty.channel.*
 import io.netty.channel.ChannelHandler.Sharable
@@ -27,7 +28,7 @@ import ketty.core.common.*
 import org.slf4j.LoggerFactory
 
 @Sharable
-class HttpServerConnectHandler(private val client: KettyClient, private val crypto: AESCrypto) : SimpleChannelInboundHandler<HttpProxyRequestHead>() {
+class HttpServerConnectHandler(private val client: KettyClient, private val crypto: AESCrypto, private val registry: MeterRegistry) : SimpleChannelInboundHandler<HttpProxyRequestHead>() {
 
     public override fun channelRead0(ctx: ChannelHandlerContext, requestHead: HttpProxyRequestHead) {
         val inboundChannel = ctx.channel()
@@ -42,7 +43,7 @@ class HttpServerConnectHandler(private val client: KettyClient, private val cryp
                                     "${requestHead.protocolVersion} 200 Connection Established\n\n".toByteArray()
                                 )
                             )
-                            MixinServerUtils.relay(client, crypto, connect, ctx)
+                            MixinServerUtils.relay(client, crypto, connect, ctx, registry)
                         } else {
                             ctx.close()
                         }
@@ -54,7 +55,7 @@ class HttpServerConnectHandler(private val client: KettyClient, private val cryp
                     client.send(AtProxyRequest.CONNECT, it) { connect ->
                         if (connect.isSuccessful()) {
                             val vc = VirtualChannel(connect.body.slice().readLong())
-                            MixinServerUtils.relay(client, crypto, connect, ctx)
+                            MixinServerUtils.relay(client, crypto, connect, ctx, registry)
                             val encrypt = headData.use { crypto.encrypt(it.readArray()) }
                             Unpooled.wrappedBuffer(vc.encode(), Unpooled.wrappedBuffer(encrypt)).use {
                                 client.send(AtProxyRequest.WRITE, it) { head ->

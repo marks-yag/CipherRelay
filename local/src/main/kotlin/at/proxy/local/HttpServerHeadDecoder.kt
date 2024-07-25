@@ -2,6 +2,7 @@ package at.proxy.local
 
 import com.github.yag.crypto.AESCrypto
 import com.google.common.net.HostAndPort
+import io.micrometer.core.instrument.MeterRegistry
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.Unpooled
@@ -16,7 +17,7 @@ import org.slf4j.LoggerFactory
 import java.net.URI
 import java.util.regex.Pattern
 
-class HttpServerHeadDecoder(private val client: KettyClient, private val crypto: AESCrypto) : SimpleChannelInboundHandler<ByteBuf>() {
+class HttpServerHeadDecoder(private val client: KettyClient, private val crypto: AESCrypto, private val registry: MeterRegistry) : SimpleChannelInboundHandler<ByteBuf>() {
 
     override fun channelRead0(ctx: ChannelHandlerContext, buf: ByteBuf) {
         val idx = ByteBufUtil.indexOf(CRLF.slice(), buf)
@@ -39,7 +40,7 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
                 HttpProxyRequestHead(url.host, if (url.port == -1) 80 else url.port, HttpProxyType.WEB, protocolVersion, buf.resetReaderIndex())
             }
         }
-        ctx.pipeline().addLast(HttpServerConnectHandler(client, crypto)).remove(this)
+        ctx.pipeline().addLast(HttpServerConnectHandler(client, crypto, registry)).remove(this)
         ctx.fireChannelRead(httpProxyRequestHead)
     }
 

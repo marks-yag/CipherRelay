@@ -16,6 +16,7 @@
 package at.proxy.local
 
 import com.github.yag.crypto.AESCrypto
+import io.micrometer.core.instrument.MeterRegistry
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.ChannelHandlerContext
@@ -28,9 +29,9 @@ import org.slf4j.LoggerFactory
 import java.io.IOException
 
 @Sharable
-class SocksServerHandler(client: KettyClient, crypto: AESCrypto) : SimpleChannelInboundHandler<SocksMessage>() {
+class SocksServerHandler(client: KettyClient, crypto: AESCrypto, registry: MeterRegistry) : SimpleChannelInboundHandler<SocksMessage>() {
 
-    private val socketServerConnectHandler = SocksServerConnectHandler(client, crypto)
+    private val socketServerConnectHandler = SocksServerConnectHandler(client, crypto, registry)
 
     @Throws(Exception::class)
     public override fun channelRead0(ctx: ChannelHandlerContext, socksRequest: SocksMessage) {

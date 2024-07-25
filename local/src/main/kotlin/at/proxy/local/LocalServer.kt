@@ -1,6 +1,9 @@
 package at.proxy.local
 
 import config.config
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
 import io.netty.channel.EventLoopGroup
@@ -19,13 +22,23 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
 
     private var acceptorChannel: Channel
 
+    private val metrics: MeterRegistry = SimpleMeterRegistry()
+
+    private val upstreamTraffic: Counter = metrics.counter("upstream-traffic")
+
+    private val downstreamTraffic: Counter = metrics.counter("downstream-traffic")
+
+    private val upstreamTrafficEncrypted: Counter = metrics.counter("upstream-traffic-encrypted")
+
+    private val downstreamTrafficEncrypted: Counter = metrics.counter("downstream-traffic-encrypted")
+
     init {
         logger.info("Proxy Server starting...")
         serverEventLoopGroup = NioEventLoopGroup(Runtime.getRuntime().availableProcessors())
 
         serverBootstrap = ServerBootstrap()
             .channel(NioServerSocketChannel::class.java)
-            .childHandler(LocalServerInitializer(config.key, config.remoteEndpoint))
+            .childHandler(LocalServerInitializer(config.key, config.remoteEndpoint, metrics))
             .group(serverEventLoopGroup)
         acceptorChannel = serverBootstrap.bind(config.port).syncUninterruptibly().channel()
     }

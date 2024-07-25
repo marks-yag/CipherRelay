@@ -4,9 +4,9 @@ import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.Encoders.Companion.encode
 import at.proxy.protocol.VirtualChannel
 import com.github.yag.crypto.AESCrypto
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
 import io.netty.buffer.Unpooled
-import io.netty.channel.Channel
-import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import ketty.core.client.KettyClient
 import ketty.core.common.*
@@ -16,21 +16,22 @@ import org.slf4j.LoggerFactory
 
 
 object MixinServerUtils {
-    /**
-     * Closes the specified channel after all queued write requests are flushed.
-     */
-    fun closeOnFlush(ch: Channel) {
-        if (ch.isActive) {
-            ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
-        }
-    }
 
     fun relay(
         client: KettyClient,
         crypto: AESCrypto,
         connect: Packet<ResponseHeader>,
-        ctx: ChannelHandlerContext
+        ctx: ChannelHandlerContext,
+        registry: MeterRegistry
     ) {
+
+        val upstreamTraffic: Counter = registry.counter("upstream-traffic")
+
+        val downstreamTraffic: Counter = registry.counter("downstream-traffic")
+
+        val upstreamTrafficEncrypted: Counter = registry.counter("upstream-traffic-encrypted")
+
+        val downstreamTrafficEncrypted: Counter = registry.counter("downstream-traffic-encrypted")
         val vc = VirtualChannel(connect.body.slice().readLong())
         vc.encode().use {
             client.send(AtProxyRequest.READ, it) { response ->
