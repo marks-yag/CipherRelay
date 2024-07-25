@@ -4,6 +4,8 @@ import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.Encoders.Companion.encode
 import at.proxy.protocol.VirtualChannel
 import com.github.yag.crypto.AESCrypto
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
@@ -14,7 +16,10 @@ import ketty.core.common.use
 import org.slf4j.LoggerFactory
 import java.io.IOException
 
-class RelayHandler(private val vc: VirtualChannel, private val crypto: AESCrypto, private val kettyClient: KettyClient) : ChannelInboundHandlerAdapter() {
+class RelayHandler(private val vc: VirtualChannel, private val crypto: AESCrypto, private val kettyClient: KettyClient, private val registry: MeterRegistry) : ChannelInboundHandlerAdapter() {
+
+    private val upstreamTraffic: Counter = registry.counter("upstream-traffic")
+    private val upstreamTrafficEncrypted: Counter = registry.counter("upstream-traffic-encrypted")
 
     override fun channelActive(ctx: ChannelHandlerContext) {
         ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
@@ -22,9 +27,11 @@ class RelayHandler(private val vc: VirtualChannel, private val crypto: AESCrypto
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         if (msg is ByteBuf) {
+            upstreamTraffic.increment(msg.readableBytes().toDouble())
             val body = msg.use {
                 Unpooled.wrappedBuffer(crypto.encrypt(it.readArray()))
             }
+            upstreamTrafficEncrypted.increment(body.readableBytes().toDouble())
             Unpooled.wrappedBuffer(vc.encode(), body).use {
                 kettyClient.send(AtProxyRequest.WRITE, it) {
                     log.debug("Send write request done for {}.", vc)
@@ -42,6 +49,7 @@ class RelayHandler(private val vc: VirtualChannel, private val crypto: AESCrypto
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
         when (cause) {
             is IOException -> {

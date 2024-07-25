@@ -1,9 +1,8 @@
 package at.proxy.local
 
 import config.config
-import io.micrometer.core.instrument.Counter
-import io.micrometer.core.instrument.MeterRegistry
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+import io.micrometer.prometheusmetrics.PrometheusConfig
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
 import io.netty.channel.EventLoopGroup
@@ -12,6 +11,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import ketty.utils.MemoryLeakDetector
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
 
 class LocalServer(config: LocalConfig) : AutoCloseable {
     private val logger: Logger = LoggerFactory.getLogger(LocalServer::class.java)
@@ -22,15 +22,7 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
 
     private var acceptorChannel: Channel
 
-    private val metrics: MeterRegistry = SimpleMeterRegistry()
-
-    private val upstreamTraffic: Counter = metrics.counter("upstream-traffic")
-
-    private val downstreamTraffic: Counter = metrics.counter("downstream-traffic")
-
-    private val upstreamTrafficEncrypted: Counter = metrics.counter("upstream-traffic-encrypted")
-
-    private val downstreamTrafficEncrypted: Counter = metrics.counter("downstream-traffic-encrypted")
+    private val registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
     init {
         logger.info("Proxy Server starting...")
@@ -38,7 +30,7 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
 
         serverBootstrap = ServerBootstrap()
             .channel(NioServerSocketChannel::class.java)
-            .childHandler(LocalServerInitializer(config.key, config.remoteEndpoint, metrics))
+            .childHandler(LocalServerInitializer(config.key, config.remoteEndpoint, registry))
             .group(serverEventLoopGroup)
         acceptorChannel = serverBootstrap.bind(config.port).syncUninterruptibly().channel()
     }

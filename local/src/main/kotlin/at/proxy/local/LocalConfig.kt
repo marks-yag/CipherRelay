@@ -9,6 +9,9 @@ class LocalConfig {
     var port = 9527
 
     @Value
+    val metricPort = 19527
+
+    @Value
     var key = "at-proxy"
 
     @Value

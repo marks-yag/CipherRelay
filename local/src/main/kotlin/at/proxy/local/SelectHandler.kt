@@ -9,7 +9,9 @@ import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.socksx.SocksPortUnificationServerHandler
 import io.netty.handler.codec.socksx.SocksVersion
 import ketty.core.client.client
+import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
+import java.nio.charset.Charset
 
 @Sharable
 class SelectHandler(key: String, atProxyRemoteAddress: InetSocketAddress, private val registry: MeterRegistry) : SimpleChannelInboundHandler<ByteBuf>() {
@@ -24,7 +26,6 @@ class SelectHandler(key: String, atProxyRemoteAddress: InetSocketAddress, privat
         if (msg.readableBytes() == 0) return
         val p = ctx.pipeline()
         val versionVal = msg.slice().readByte()
-
         val version = SocksVersion.valueOf(versionVal)
         if (version == SocksVersion.SOCKS4a || version == SocksVersion.SOCKS5) {
             p.addLast(SocksPortUnificationServerHandler(), socksServerHandler)
@@ -33,5 +34,9 @@ class SelectHandler(key: String, atProxyRemoteAddress: InetSocketAddress, privat
         }
         p.remove(this)
         ctx.fireChannelRead(msg.retain())
+    }
+
+    companion object {
+        private val LOG = LoggerFactory.getLogger(SelectHandler::class.java)
     }
 }

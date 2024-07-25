@@ -3,6 +3,7 @@ package at.proxy.local
 import com.github.yag.crypto.AESCrypto
 import com.google.common.net.HostAndPort
 import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.Unpooled
@@ -12,6 +13,7 @@ import io.netty.handler.codec.http.HttpConstants
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.util.ByteProcessor
 import io.netty.util.internal.AppendableCharSequence
+import io.prometheus.metrics.model.registry.PrometheusRegistry
 import ketty.core.client.KettyClient
 import org.slf4j.LoggerFactory
 import java.net.URI
@@ -34,10 +36,27 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
                 HttpProxyRequestHead(hostAndPort.host, hostAndPort.port, HttpProxyType.TUNNEL, protocolVersion, Unpooled.EMPTY_BUFFER)
             }
             else -> {
-                LOG.info("method: {}", method);
+                LOG.info("method: {}", method)
+
                 //http proxy
-                val url = URI.create(uri).toURL()
-                HttpProxyRequestHead(url.host, if (url.port == -1) 80 else url.port, HttpProxyType.WEB, protocolVersion, buf.resetReaderIndex())
+                val uri = URI.create(uri)
+                if (uri.isAbsolute) {
+                    val url = uri.toURL()
+                    HttpProxyRequestHead(
+                        url.host,
+                        if (url.port == -1) 80 else url.port,
+                        HttpProxyType.WEB,
+                        protocolVersion,
+                        buf.resetReaderIndex()
+                    )
+                } else {
+                    val metrics = (registry as PrometheusMeterRegistry).scrape()
+                    ctx.write(Unpooled.wrappedBuffer("HTTP/1.1 200 OK\r\n".toByteArray()))
+                    ctx.write(Unpooled.wrappedBuffer("Content-Type: text/plain\r\n".toByteArray()))
+                    ctx.write(Unpooled.wrappedBuffer("Content-Length: ${metrics.length}\r\n\r\n".toByteArray()))
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer(metrics.toByteArray()))
+                    return
+                }
             }
         }
         ctx.pipeline().addLast(HttpServerConnectHandler(client, crypto, registry)).remove(this)
