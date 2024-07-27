@@ -1,5 +1,6 @@
 package at.proxy.local
 
+import com.google.common.net.HostAndPort
 import config.config
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
@@ -11,6 +12,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import ketty.utils.MemoryLeakDetector
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.net.InetSocketAddress
 
 
 class LocalServer(config: LocalConfig) : AutoCloseable {
@@ -30,8 +32,11 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
 
         serverBootstrap = ServerBootstrap()
             .channel(NioServerSocketChannel::class.java)
-            .childHandler(LocalServerInitializer(config.key, config.remoteEndpoint, registry))
-            .group(serverEventLoopGroup)
+            .childHandler(LocalServerInitializer(
+                config.key,
+                HostAndPort.fromString(config.remoteEndpoint).let { InetSocketAddress(it.host, it.port) },
+                registry)
+            ).group(serverEventLoopGroup)
         acceptorChannel = serverBootstrap.bind(config.port).syncUninterruptibly().channel()
     }
 

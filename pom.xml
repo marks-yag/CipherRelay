@@ -12,6 +12,7 @@
         <module>protocol</module>
         <module>remote</module>
         <module>local</module>
+        <module>desktop</module>
     </modules>
 
     <properties>
