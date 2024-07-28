@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory
 import java.net.URI
 import java.util.regex.Pattern
 
-class HttpServerHeadDecoder(private val client: KettyClient, private val crypto: AESCrypto, private val registry: MeterRegistry) : SimpleChannelInboundHandler<ByteBuf>() {
+class HttpServerHeadDecoder(private val client: KettyClient, private val crypto: AESCrypto, private val metrics: Metrics) : SimpleChannelInboundHandler<ByteBuf>() {
 
     override fun channelRead0(ctx: ChannelHandlerContext, buf: ByteBuf) {
         val idx = ByteBufUtil.indexOf(CRLF.slice(), buf)
@@ -50,16 +50,16 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
                         buf.resetReaderIndex()
                     )
                 } else {
-                    val metrics = (registry as PrometheusMeterRegistry).scrape()
+                    val message = metrics.scrape()
                     ctx.write(Unpooled.wrappedBuffer("HTTP/1.1 200 OK\r\n".toByteArray()))
                     ctx.write(Unpooled.wrappedBuffer("Content-Type: text/plain\r\n".toByteArray()))
-                    ctx.write(Unpooled.wrappedBuffer("Content-Length: ${metrics.length}\r\n\r\n".toByteArray()))
-                    ctx.writeAndFlush(Unpooled.wrappedBuffer(metrics.toByteArray()))
+                    ctx.write(Unpooled.wrappedBuffer("Content-Length: ${message.length}\r\n\r\n".toByteArray()))
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer(message.toByteArray()))
                     return
                 }
             }
         }
-        ctx.pipeline().addLast(HttpServerConnectHandler(client, crypto, registry)).remove(this)
+        ctx.pipeline().addLast(HttpServerConnectHandler(client, crypto, metrics)).remove(this)
         ctx.fireChannelRead(httpProxyRequestHead)
     }
 

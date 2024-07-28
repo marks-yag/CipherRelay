@@ -22,20 +22,17 @@ object MixinServerUtils {
         crypto: AESCrypto,
         connect: Packet<ResponseHeader>,
         ctx: ChannelHandlerContext,
-        registry: MeterRegistry
+        metrics: Metrics
     ) {
-        val downstreamTraffic: Counter = registry.counter("downstream-traffic")
-        val downstreamTrafficEncrypted: Counter = registry.counter("downstream-traffic-encrypted")
-
         val vc = VirtualChannel(connect.body.slice().readLong())
         vc.encode().use {
             client.send(AtProxyRequest.READ, it) { response ->
-                downstreamTrafficEncrypted.increment(response.header.thrift.contentLength.toDouble())
+                metrics.downstreamTrafficEncrypted.increment(response.header.thrift.contentLength.toDouble())
                 if (response.isSuccessful()) {
                     log.debug("Received read response, length: {}.", response.body.readableBytes())
                     if (response.status() == StatusCode.PARTIAL_CONTENT) {
                         val decrypt = crypto.decrypt(response.body.readArray())
-                        downstreamTraffic.increment(decrypt.size.toDouble())
+                        metrics.downstreamTraffic.increment(decrypt.size.toDouble())
                         ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(decrypt))
                     } else {
                         ctx.channel().close()
@@ -46,7 +43,7 @@ object MixinServerUtils {
                 }
             }
         }
-        ctx.channel().pipeline().addLast(RelayHandler(vc, crypto, client, registry))
+        ctx.channel().pipeline().addLast(RelayHandler(vc, crypto, client, metrics))
     }
 
     private val log = LoggerFactory.getLogger(MixinServerUtils::class.java)

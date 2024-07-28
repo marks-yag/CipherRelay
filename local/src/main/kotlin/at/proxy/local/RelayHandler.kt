@@ -16,10 +16,9 @@ import ketty.core.common.use
 import org.slf4j.LoggerFactory
 import java.io.IOException
 
-class RelayHandler(private val vc: VirtualChannel, private val crypto: AESCrypto, private val kettyClient: KettyClient, private val registry: MeterRegistry) : ChannelInboundHandlerAdapter() {
+class RelayHandler(private val vc: VirtualChannel, private val crypto: AESCrypto, private val kettyClient: KettyClient, private val metrics: Metrics) : ChannelInboundHandlerAdapter() {
 
-    private val upstreamTraffic: Counter = registry.counter("upstream-traffic")
-    private val upstreamTrafficEncrypted: Counter = registry.counter("upstream-traffic-encrypted")
+
 
     override fun channelActive(ctx: ChannelHandlerContext) {
         ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
@@ -27,11 +26,11 @@ class RelayHandler(private val vc: VirtualChannel, private val crypto: AESCrypto
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         if (msg is ByteBuf) {
-            upstreamTraffic.increment(msg.readableBytes().toDouble())
+            metrics.upstreamTraffic.increment(msg.readableBytes().toDouble())
             val body = msg.use {
                 Unpooled.wrappedBuffer(crypto.encrypt(it.readArray()))
             }
-            upstreamTrafficEncrypted.increment(body.readableBytes().toDouble())
+            metrics.upstreamTrafficEncrypted.increment(body.readableBytes().toDouble())
             Unpooled.wrappedBuffer(vc.encode(), body).use {
                 kettyClient.send(AtProxyRequest.WRITE, it) {
                     log.debug("Send write request done for {}.", vc)

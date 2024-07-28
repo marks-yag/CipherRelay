@@ -24,7 +24,7 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
 
     private var acceptorChannel: Channel
 
-    private val registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
+    private val metrics = Metrics()
 
     init {
         logger.info("Proxy Server starting...")
@@ -35,7 +35,7 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
             .childHandler(LocalServerInitializer(
                 config.key,
                 HostAndPort.fromString(config.remoteEndpoint).let { InetSocketAddress(it.host, it.port) },
-                registry)
+                metrics)
             ).group(serverEventLoopGroup)
         acceptorChannel = serverBootstrap.bind(config.port).syncUninterruptibly().channel()
     }

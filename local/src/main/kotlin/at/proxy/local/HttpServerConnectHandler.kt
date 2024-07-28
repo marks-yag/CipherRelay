@@ -29,10 +29,7 @@ import ketty.core.common.*
 import org.slf4j.LoggerFactory
 
 @Sharable
-class HttpServerConnectHandler(private val client: KettyClient, private val crypto: AESCrypto, private val registry: MeterRegistry) : SimpleChannelInboundHandler<HttpProxyRequestHead>() {
-
-    val upstreamTraffic: Counter = registry.counter("upstream-traffic")
-    val upstreamTrafficEncrypted: Counter = registry.counter("upstream-traffic-encrypted")
+class HttpServerConnectHandler(private val client: KettyClient, private val crypto: AESCrypto, private val metrics: Metrics) : SimpleChannelInboundHandler<HttpProxyRequestHead>() {
 
     public override fun channelRead0(ctx: ChannelHandlerContext, requestHead: HttpProxyRequestHead) {
         val inboundChannel = ctx.channel()
@@ -47,7 +44,7 @@ class HttpServerConnectHandler(private val client: KettyClient, private val cryp
                                     "${requestHead.protocolVersion} 200 Connection Established\n\n".toByteArray()
                                 )
                             )
-                            MixinServerUtils.relay(client, crypto, connect, ctx, registry)
+                            MixinServerUtils.relay(client, crypto, connect, ctx, metrics)
                         } else {
                             ctx.close()
                         }
@@ -60,7 +57,7 @@ class HttpServerConnectHandler(private val client: KettyClient, private val cryp
                     client.send(AtProxyRequest.CONNECT, it) { connect ->
                         if (connect.isSuccessful()) {
                             val vc = VirtualChannel(connect.body.slice().readLong())
-                            MixinServerUtils.relay(client, crypto, connect, ctx, registry)
+                            MixinServerUtils.relay(client, crypto, connect, ctx, metrics)
                             val rawData = headData.use { it.readArray() }
                             val encrypt = crypto.encrypt(rawData)
                             Unpooled.wrappedBuffer(vc.encode(), Unpooled.wrappedBuffer(encrypt)).use {
@@ -69,8 +66,8 @@ class HttpServerConnectHandler(private val client: KettyClient, private val cryp
                                         ctx.close()
                                     }
                                 }
-                                upstreamTraffic.increment(headData.readableBytes().toDouble())
-                                upstreamTrafficEncrypted.increment(encrypt.size.toDouble())
+                                metrics.upstreamTraffic.increment(headData.readableBytes().toDouble())
+                                metrics.upstreamTrafficEncrypted.increment(encrypt.size.toDouble())
                             }
                         } else {
                             headData.release()

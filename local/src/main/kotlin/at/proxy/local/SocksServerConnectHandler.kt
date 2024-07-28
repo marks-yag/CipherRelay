@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory
 import java.io.IOException
 
 @Sharable
-class SocksServerConnectHandler(private val client: KettyClient, private val crypto: AESCrypto, private val registry: MeterRegistry) : SimpleChannelInboundHandler<SocksMessage>() {
+class SocksServerConnectHandler(private val client: KettyClient, private val crypto: AESCrypto, private val metrics: Metrics) : SimpleChannelInboundHandler<SocksMessage>() {
 
     public override fun channelRead0(ctx: ChannelHandlerContext, message: SocksMessage) {
         val request = message as Socks5CommandRequest
@@ -51,7 +51,7 @@ class SocksServerConnectHandler(private val client: KettyClient, private val cry
                             request.dstPort()
                         )
                     )
-                    MixinServerUtils.relay(client, crypto, connect, ctx, registry)
+                    MixinServerUtils.relay(client, crypto, connect, ctx, metrics)
                 } else {
                     ctx.channel().writeAndFlush(
                         DefaultSocks5CommandResponse(

@@ -29,9 +29,9 @@ import org.slf4j.LoggerFactory
 import java.io.IOException
 
 @Sharable
-class SocksServerHandler(client: KettyClient, crypto: AESCrypto, registry: MeterRegistry) : SimpleChannelInboundHandler<SocksMessage>() {
+class SocksServerHandler(client: KettyClient, crypto: AESCrypto, metrics: Metrics) : SimpleChannelInboundHandler<SocksMessage>() {
 
-    private val socketServerConnectHandler = SocksServerConnectHandler(client, crypto, registry)
+    private val socketServerConnectHandler = SocksServerConnectHandler(client, crypto, metrics)
 
     @Throws(Exception::class)
     public override fun channelRead0(ctx: ChannelHandlerContext, socksRequest: SocksMessage) {

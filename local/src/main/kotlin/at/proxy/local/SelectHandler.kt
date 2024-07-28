@@ -14,13 +14,13 @@ import java.net.InetSocketAddress
 import java.nio.charset.Charset
 
 @Sharable
-class SelectHandler(key: String, atProxyRemoteAddress: InetSocketAddress, private val registry: MeterRegistry) : SimpleChannelInboundHandler<ByteBuf>() {
+class SelectHandler(key: String, atProxyRemoteAddress: InetSocketAddress, private val metrics: Metrics) : SimpleChannelInboundHandler<ByteBuf>() {
 
     private val client = client(atProxyRemoteAddress)
 
     private val crypto = AESCrypto(key.toByteArray())
 
-    private val socksServerHandler = SocksServerHandler(client, crypto, registry)
+    private val socksServerHandler = SocksServerHandler(client, crypto, metrics)
 
     override fun channelRead0(ctx: ChannelHandlerContext, msg: ByteBuf) {
         if (msg.readableBytes() == 0) return
@@ -30,7 +30,7 @@ class SelectHandler(key: String, atProxyRemoteAddress: InetSocketAddress, privat
         if (version == SocksVersion.SOCKS4a || version == SocksVersion.SOCKS5) {
             p.addLast(SocksPortUnificationServerHandler(), socksServerHandler)
         } else {
-            p.addLast(HttpServerHeadDecoder(client, crypto, registry))
+            p.addLast(HttpServerHeadDecoder(client, crypto, metrics))
         }
         p.remove(this)
         ctx.fireChannelRead(msg.retain())
