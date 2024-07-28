@@ -24,7 +24,7 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
 
     private var acceptorChannel: Channel
 
-    private val metrics = Metrics()
+    val metrics = Metrics()
 
     init {
         logger.info("Proxy Server starting...")

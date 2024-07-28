@@ -3,6 +3,7 @@ package at.proxy.desktop
 import at.proxy.local.LocalConfig
 import at.proxy.local.LocalServer
 import com.fasterxml.jackson.databind.ObjectMapper
+import java.awt.BorderLayout
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -42,24 +43,47 @@ class Desktop {
             config.set(LocalConfig())
             config(frame, configFile)
         }
-        val rootPanel = JPanel()
-        rootPanel.add(JButton("Configure...").also {
+        val toolBar = JToolBar()
+        toolBar.add(JButton("Configure...").also {
             it.addActionListener {
                 config(frame, configFile)
             }
         })
-        rootPanel.add(JButton("Start").also {
+        toolBar.add(JButton("Start").also {
             it.addActionListener {
                 start(config.get())
             }
         })
-        rootPanel.add(JButton("Stop").also {
+        toolBar.add(JButton("Stop").also {
             it.addActionListener {
                 stop()
             }
         })
+        frame.layout = BorderLayout()
+        frame.add(toolBar, "North")
 
-        frame.add(rootPanel)
+        val statusBar = JPanel()
+        statusBar.add(JLabel("Upstream:"))
+        statusBar.add(JLabel("N/A").also { label ->
+            Timer(1000) {
+                server.get()?.let {
+                    label.text = server.get().metrics.upstreamTrafficEncrypted.count().toString()
+                }
+            }.start()
+        })
+        statusBar.add(JLabel("bytes/sec"))
+
+        statusBar.add(JLabel("Downstream:"))
+        statusBar.add(JLabel("N/A").also { label ->
+            Timer(1000) {
+                server.get()?.let {
+                    label.text = server.get().metrics.downstreamTrafficEncrypted.count().toString()
+                }
+            }.start()
+        })
+        statusBar.add(JLabel("bytes/sec"))
+        frame.add(statusBar, "South")
+
         frame.isVisible = true
     }
 
