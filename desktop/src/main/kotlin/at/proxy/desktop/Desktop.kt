@@ -7,6 +7,7 @@ import java.awt.BorderLayout
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.*
 import kotlin.io.path.readBytes
@@ -17,6 +18,8 @@ class Desktop {
     private val config = AtomicReference<LocalConfig>()
 
     private val server = AtomicReference<LocalServer>()
+
+    private val started = AtomicBoolean()
 
     private val mapper = ObjectMapper()
 
@@ -49,14 +52,16 @@ class Desktop {
                 config(frame, configFile)
             }
         })
-        toolBar.add(JButton("Start").also {
-            it.addActionListener {
-                start(config.get())
-            }
-        })
-        toolBar.add(JButton("Stop").also {
-            it.addActionListener {
-                stop()
+        toolBar.add(JButton("Start").also { button ->
+            button.addActionListener {
+                if (started.compareAndSet(false, true)) {
+                    start(config.get())
+                    button.text = "Stop"
+                } else {
+                    button.text = "Start"
+                    started.set(false)
+                    stop()
+                }
             }
         })
         frame.layout = BorderLayout()
