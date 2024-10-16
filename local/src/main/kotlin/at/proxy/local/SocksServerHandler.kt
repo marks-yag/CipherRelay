@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory
 import java.io.IOException
 
 @Sharable
-class SocksServerHandler(client: KettyClient, crypto: AESCrypto, metrics: Metrics) : SimpleChannelInboundHandler<SocksMessage>() {
+class SocksServerHandler(private val connectionManager: ConnectionManager, client: KettyClient, crypto: AESCrypto, metrics: Metrics) : SimpleChannelInboundHandler<SocksMessage>() {
 
     private val socketServerConnectHandler = SocksServerConnectHandler(client, crypto, metrics)
 

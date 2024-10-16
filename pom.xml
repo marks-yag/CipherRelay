@@ -13,7 +13,6 @@
         <module>remote</module>
         <module>local</module>
         <module>desktop</module>
-        <module>desktop-jfx</module>
     </modules>
 
     <properties>

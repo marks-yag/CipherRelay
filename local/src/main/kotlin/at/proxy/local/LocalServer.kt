@@ -13,6 +13,7 @@ import ketty.utils.MemoryLeakDetector
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
+import kotlin.concurrent.thread
 
 
 class LocalServer(config: LocalConfig) : AutoCloseable {
@@ -23,6 +24,8 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
     private var serverEventLoopGroup: EventLoopGroup
 
     private var acceptorChannel: Channel
+
+    private val connectionManager = ConnectionManager()
 
     val metrics = Metrics()
 
@@ -35,9 +38,20 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
             .childHandler(LocalServerInitializer(
                 config.key,
                 HostAndPort.fromString(config.remoteEndpoint).let { InetSocketAddress(it.host, it.port) },
+                connectionManager,
                 metrics)
             ).group(serverEventLoopGroup)
         acceptorChannel = serverBootstrap.bind(config.port).syncUninterruptibly().channel()
+        thread(name = "Dump") {
+            while (true) {
+                LOG.info("----------Connection dump-------------")
+                for (conn in connectionManager.getAllConnections()) {
+                    LOG.info("Connection: {}.", conn)
+                }
+                LOG.info("----------Connection dump over-------------")
+                Thread.sleep(1000L)
+            }
+        }
     }
 
     override fun close() {
@@ -48,6 +62,9 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
     }
 
     companion object {
+
+        private val LOG = LoggerFactory.getLogger(LocalServer::class.java)
+
         @JvmStatic
         fun main(args: Array<String>) {
             val config = System.getProperties().config(LocalConfig::class.java)

@@ -16,10 +16,11 @@ import io.netty.util.internal.AppendableCharSequence
 import io.prometheus.metrics.model.registry.PrometheusRegistry
 import ketty.core.client.KettyClient
 import org.slf4j.LoggerFactory
+import java.net.InetSocketAddress
 import java.net.URI
 import java.util.regex.Pattern
 
-class HttpServerHeadDecoder(private val client: KettyClient, private val crypto: AESCrypto, private val metrics: Metrics) : SimpleChannelInboundHandler<ByteBuf>() {
+class HttpServerHeadDecoder(private val connectionManager: ConnectionManager, val client: KettyClient, private val crypto: AESCrypto, private val metrics: Metrics) : SimpleChannelInboundHandler<ByteBuf>() {
 
     override fun channelRead0(ctx: ChannelHandlerContext, buf: ByteBuf) {
         val idx = ByteBufUtil.indexOf(CRLF.slice(), buf)
@@ -59,7 +60,8 @@ class HttpServerHeadDecoder(private val client: KettyClient, private val crypto:
                 }
             }
         }
-        ctx.pipeline().addLast(HttpServerConnectHandler(client, crypto, metrics)).remove(this)
+        connectionManager.addHttpConnection(ctx.channel().id(), HttpConnection(ctx.channel().remoteAddress() as InetSocketAddress, httpProxyRequestHead.proxyType, httpProxyRequestHead.host + ":" + httpProxyRequestHead.port, httpProxyRequestHead.protocolVersion))
+        ctx.pipeline().addLast(HttpServerConnectHandler(connectionManager, client, crypto, metrics)).remove(this)
         ctx.fireChannelRead(httpProxyRequestHead)
     }
 

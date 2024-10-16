@@ -29,7 +29,7 @@ import ketty.core.common.*
 import org.slf4j.LoggerFactory
 
 @Sharable
-class HttpServerConnectHandler(private val client: KettyClient, private val crypto: AESCrypto, private val metrics: Metrics) : SimpleChannelInboundHandler<HttpProxyRequestHead>() {
+class HttpServerConnectHandler(private val connectionManager: ConnectionManager, private val client: KettyClient, private val crypto: AESCrypto, private val metrics: Metrics) : SimpleChannelInboundHandler<HttpProxyRequestHead>() {
 
     public override fun channelRead0(ctx: ChannelHandlerContext, requestHead: HttpProxyRequestHead) {
         val inboundChannel = ctx.channel()
@@ -77,6 +77,12 @@ class HttpServerConnectHandler(private val client: KettyClient, private val cryp
                 }
             }
         }
+    }
+
+    override fun channelInactive(ctx: ChannelHandlerContext) {
+        super.channelInactive(ctx)
+        LOG.info("Channel inactive: {}.", ctx.channel().remoteAddress())
+        connectionManager.removeConnection(ctx.channel().id())
     }
 
     companion object {
