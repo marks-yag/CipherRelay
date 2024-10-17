@@ -25,7 +25,7 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
 
     private var acceptorChannel: Channel
 
-    private val connectionManager = ConnectionManager()
+    val connectionManager = ConnectionManager()
 
     val metrics = Metrics()
 
