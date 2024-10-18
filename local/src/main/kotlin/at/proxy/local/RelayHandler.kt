@@ -16,7 +16,7 @@ import ketty.core.common.use
 import org.slf4j.LoggerFactory
 import java.io.IOException
 
-class RelayHandler(private val vc: VirtualChannel, private val crypto: AESCrypto, private val kettyClient: KettyClient, private val metrics: Metrics) : ChannelInboundHandlerAdapter() {
+class RelayHandler(val connection: Connection, private val vc: VirtualChannel, private val crypto: AESCrypto, private val kettyClient: KettyClient, private val metrics: Metrics) : ChannelInboundHandlerAdapter() {
 
 
 
@@ -26,6 +26,7 @@ class RelayHandler(private val vc: VirtualChannel, private val crypto: AESCrypto
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         if (msg is ByteBuf) {
+            connection.uploadTrafficInBytes.addAndGet(msg.readableBytes().toLong())
             metrics.upstreamTraffic.increment(msg.readableBytes().toDouble())
             val body = msg.use {
                 Unpooled.wrappedBuffer(crypto.encrypt(it.readArray()))

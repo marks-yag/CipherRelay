@@ -33,6 +33,7 @@ class HttpServerConnectHandler(private val connectionManager: ConnectionManager,
 
     public override fun channelRead0(ctx: ChannelHandlerContext, requestHead: HttpProxyRequestHead) {
         val inboundChannel = ctx.channel()
+        val connection = connectionManager.getConnection(ctx.channel().id())
         LOG.info("New http connection: {} {}. ", requestHead, requestHead.byteBuf.refCnt())
         Unpooled.wrappedBuffer((requestHead.host + ":" + requestHead.port).toByteArray()).use {
             when (requestHead.proxyType) {
@@ -44,7 +45,7 @@ class HttpServerConnectHandler(private val connectionManager: ConnectionManager,
                                     "${requestHead.protocolVersion} 200 Connection Established\n\n".toByteArray()
                                 )
                             )
-                            MixinServerUtils.relay(client, crypto, connect, ctx, metrics)
+                            MixinServerUtils.relay(connection, client, crypto, connect, ctx, metrics)
                         } else {
                             ctx.close()
                         }
@@ -57,7 +58,7 @@ class HttpServerConnectHandler(private val connectionManager: ConnectionManager,
                     client.send(AtProxyRequest.CONNECT, it) { connect ->
                         if (connect.isSuccessful()) {
                             val vc = VirtualChannel(connect.body.slice().readLong())
-                            MixinServerUtils.relay(client, crypto, connect, ctx, metrics)
+                            MixinServerUtils.relay(connection, client, crypto, connect, ctx, metrics)
                             val rawData = headData.use { it.readArray() }
                             val encrypt = crypto.encrypt(rawData)
                             Unpooled.wrappedBuffer(vc.encode(), Unpooled.wrappedBuffer(encrypt)).use {

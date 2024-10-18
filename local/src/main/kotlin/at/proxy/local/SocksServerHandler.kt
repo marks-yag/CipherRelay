@@ -31,7 +31,7 @@ import java.io.IOException
 @Sharable
 class SocksServerHandler(private val connectionManager: ConnectionManager, client: KettyClient, crypto: AESCrypto, metrics: Metrics) : SimpleChannelInboundHandler<SocksMessage>() {
 
-    private val socketServerConnectHandler = SocksServerConnectHandler(client, crypto, metrics)
+    private val socketServerConnectHandler = SocksServerConnectHandler(connectionManager, client, crypto, metrics)
 
     @Throws(Exception::class)
     public override fun channelRead0(ctx: ChannelHandlerContext, socksRequest: SocksMessage) {

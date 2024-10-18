@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory
 object MixinServerUtils {
 
     fun relay(
+        connection: Connection,
         client: KettyClient,
         crypto: AESCrypto,
         connect: Packet<ResponseHeader>,
@@ -27,6 +28,7 @@ object MixinServerUtils {
         val vc = VirtualChannel(connect.body.slice().readLong())
         vc.encode().use {
             client.send(AtProxyRequest.READ, it) { response ->
+                connection.downloadTrafficInBytes.addAndGet(response.header.thrift.contentLength.toLong())
                 metrics.downstreamTrafficEncrypted.increment(response.header.thrift.contentLength.toDouble())
                 if (response.isSuccessful()) {
                     log.debug("Received read response, length: {}.", response.body.readableBytes())
@@ -43,7 +45,7 @@ object MixinServerUtils {
                 }
             }
         }
-        ctx.channel().pipeline().addLast(RelayHandler(vc, crypto, client, metrics))
+        ctx.channel().pipeline().addLast(RelayHandler(connection, vc, crypto, client, metrics))
     }
 
     private val log = LoggerFactory.getLogger(MixinServerUtils::class.java)

@@ -3,8 +3,12 @@ package at.proxy.local
 import io.netty.channel.ChannelId
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentSkipListMap
+import java.util.concurrent.atomic.AtomicLong
 
 sealed class Connection(val remoteAddress: InetSocketAddress) {
+    val uploadTrafficInBytes = AtomicLong()
+    val downloadTrafficInBytes = AtomicLong()
+
     abstract fun typeName(): String
 }
 
@@ -34,6 +38,8 @@ class ConnectionManager {
     fun addHttpConnection(id: ChannelId, connection: Connection) {
         connections[id] = connection
     }
+
+    fun getConnection(id: ChannelId) = connections[id] ?: throw NoSuchElementException()
 
     fun removeConnection(id: ChannelId) {
         connections.remove(id)

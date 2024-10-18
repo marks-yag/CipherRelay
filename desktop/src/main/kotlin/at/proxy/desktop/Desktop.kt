@@ -33,7 +33,7 @@ class Desktop {
 
     private val mapper = ObjectMapper()
 
-    val columns = arrayOf("Remote Address", "Type", "Http Type", "Target URI", "Protocol Version")
+    val columns = arrayOf("Remote Address", "Type", "Http Type", "Target URI", "Protocol Version", "Download Bytes", "Upload Bytes")
 
     val model = object: AbstractTableModel() {
 
@@ -42,7 +42,9 @@ class Desktop {
             Connection::typeName,
             { c -> if (c is HttpConnection) c.type else "" },
             { c -> if (c is HttpConnection) c.targetUri else "" },
-            { c -> (c as? HttpConnection)?.protocolVersion?:""}
+            { c -> (c as? HttpConnection)?.protocolVersion?: ""},
+            Connection::downloadTrafficInBytes,
+            Connection::uploadTrafficInBytes
         )
 
         override fun getRowCount(): Int {
