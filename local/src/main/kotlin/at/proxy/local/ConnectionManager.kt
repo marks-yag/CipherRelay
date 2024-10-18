@@ -5,7 +5,7 @@ import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentSkipListMap
 
 sealed class Connection(val remoteAddress: InetSocketAddress) {
-    abstract fun type(): String
+    abstract fun typeName(): String
 }
 
 class Socks5Connection(remoteAddress: InetSocketAddress) : Connection(remoteAddress) {
@@ -13,7 +13,7 @@ class Socks5Connection(remoteAddress: InetSocketAddress) : Connection(remoteAddr
         return remoteAddress.toString()
     }
 
-    override fun type(): String {
+    override fun typeName(): String {
         return "socks5"
     }
 }
@@ -23,8 +23,8 @@ class HttpConnection(remoteAddress: InetSocketAddress, val type: HttpProxyType, 
         return "$remoteAddress->$targetUri"
     }
 
-    override fun type(): String {
-        return "http/$type"
+    override fun typeName(): String {
+        return "http"
     }
 }
 

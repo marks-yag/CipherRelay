@@ -1,6 +1,7 @@
 package at.proxy.desktop
 
 import at.proxy.local.Connection
+import at.proxy.local.HttpConnection
 import at.proxy.local.LocalConfig
 import at.proxy.local.LocalServer
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -9,12 +10,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.Executors
-import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Function
 import javax.swing.*
-import javax.swing.event.TableModelListener
 import javax.swing.table.AbstractTableModel
 import kotlin.io.path.readBytes
 import kotlin.io.path.writeText
@@ -29,19 +29,28 @@ class Desktop {
 
     private val timer = Executors.newSingleThreadScheduledExecutor()
 
-    private val connections = AtomicReference<List<Connection>>()
+    private val connections = AtomicReference<List<Connection>>(emptyList<Connection>())
 
     private val mapper = ObjectMapper()
 
-    val columns = arrayOf("Remote Address", "Type")
+    val columns = arrayOf("Remote Address", "Type", "Http Type", "Target URI", "Protocol Version")
 
     val model = object: AbstractTableModel() {
+
+        private val mapping: Array<(Connection) -> Any> = arrayOf(
+            Connection::remoteAddress,
+            Connection::typeName,
+            { c -> if (c is HttpConnection) c.type else "" },
+            { c -> if (c is HttpConnection) c.targetUri else "" },
+            { c -> (c as? HttpConnection)?.protocolVersion?:""}
+        )
+
         override fun getRowCount(): Int {
-            return connections.get()?.size ?: 0
+            return connections.get().size
         }
 
         override fun getColumnCount(): Int {
-            return 2
+            return mapping.size
         }
 
         override fun getColumnName(column: Int): String? {
@@ -50,11 +59,7 @@ class Desktop {
 
         override fun getValueAt(rowIndex: Int, columnIndex: Int): Any? {
             val connection = connections.get()[rowIndex]
-            return when (columnIndex) {
-                0 -> connection.remoteAddress
-                1 -> connection.type()
-                else -> TODO()
-            }
+            return mapping[columnIndex].invoke(connection)
         }
     }
 
