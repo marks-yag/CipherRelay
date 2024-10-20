@@ -64,6 +64,10 @@ class SocksServerConnectHandler(private val connectionManager: ConnectionManager
         }
     }
 
+    override fun channelInactive(ctx: ChannelHandlerContext) {
+        connectionManager.removeConnection(ctx.channel().id())
+    }
+
     companion object {
         private val log = LoggerFactory.getLogger(SocksServerConnectHandler::class.java)
     }

@@ -27,6 +27,7 @@ import io.netty.handler.codec.socksx.v5.*
 import ketty.core.client.KettyClient
 import org.slf4j.LoggerFactory
 import java.io.IOException
+import java.net.InetSocketAddress
 
 @Sharable
 class SocksServerHandler(private val connectionManager: ConnectionManager, client: KettyClient, crypto: AESCrypto, metrics: Metrics) : SimpleChannelInboundHandler<SocksMessage>() {
@@ -49,6 +50,7 @@ class SocksServerHandler(private val connectionManager: ConnectionManager, clien
             if (socksRequest.type() === Socks5CommandType.CONNECT) {
                 ctx.pipeline().addLast(socketServerConnectHandler)
                 ctx.pipeline().remove(this)
+                connectionManager.addHttpConnection(ctx.channel().id(), Socks5Connection(ctx.channel().remoteAddress() as InetSocketAddress))
                 ctx.fireChannelRead(socksRequest)
             } else {
                 ctx.close()
