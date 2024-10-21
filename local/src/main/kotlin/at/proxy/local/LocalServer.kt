@@ -2,8 +2,6 @@ package at.proxy.local
 
 import com.google.common.net.HostAndPort
 import config.config
-import io.micrometer.prometheusmetrics.PrometheusConfig
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
 import io.netty.channel.EventLoopGroup
@@ -13,8 +11,6 @@ import ketty.utils.MemoryLeakDetector
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
-import kotlin.concurrent.thread
-
 
 class LocalServer(config: LocalConfig) : AutoCloseable {
     private val logger: Logger = LoggerFactory.getLogger(LocalServer::class.java)
@@ -42,16 +38,6 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
                 metrics)
             ).group(serverEventLoopGroup)
         acceptorChannel = serverBootstrap.bind(config.port).syncUninterruptibly().channel()
-        thread(name = "Dump") {
-            while (true) {
-                LOG.info("----------Connection dump-------------")
-                for (conn in connectionManager.getAllConnections()) {
-                    LOG.info("Connection: {}.", conn)
-                }
-                LOG.info("----------Connection dump over-------------")
-                Thread.sleep(1000L)
-            }
-        }
     }
 
     override fun close() {

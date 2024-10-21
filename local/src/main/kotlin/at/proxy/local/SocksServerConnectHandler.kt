@@ -68,6 +68,10 @@ class SocksServerConnectHandler(private val connectionManager: ConnectionManager
         connectionManager.removeConnection(ctx.channel().id())
     }
 
+    override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
+        log.debug("Unknown exception: {}.", connectionManager.getConnection(ctx.channel().id()), cause)
+    }
+
     companion object {
         private val log = LoggerFactory.getLogger(SocksServerConnectHandler::class.java)
     }

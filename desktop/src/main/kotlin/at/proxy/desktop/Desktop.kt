@@ -152,7 +152,7 @@ class Desktop {
         statusBar.add(JLabel("N/A").also { label ->
             Timer(1000) {
                 server.get()?.let {
-                    label.text = server.get().metrics.downstreamTrafficEncrypted.measure().toList().toString()
+                    label.text = server.get().metrics.downstreamTrafficEncrypted.count().toString()
                 }
             }.start()
         })
