@@ -5,30 +5,40 @@ import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.atomic.AtomicLong
 
-sealed class Connection(val remoteAddress: InetSocketAddress) {
+sealed class Connection(val clientAddress: InetSocketAddress) {
     val uploadTrafficInBytes = AtomicLong()
     val downloadTrafficInBytes = AtomicLong()
 
     abstract fun typeName(): String
+
+    abstract fun targetAddress(): String
 }
 
-class Socks5Connection(remoteAddress: InetSocketAddress) : Connection(remoteAddress) {
+class Socks5Connection(clientAddress: InetSocketAddress, val requestAddress: String, val requestPort: Int) : Connection(clientAddress) {
     override fun toString(): String {
-        return remoteAddress.toString()
+        return clientAddress.toString()
     }
 
     override fun typeName(): String {
         return "socks5"
     }
+
+    override fun targetAddress(): String {
+        return "$requestAddress:$requestPort"
+    }
 }
 
-class HttpConnection(remoteAddress: InetSocketAddress, val type: HttpProxyType, val targetUri: String, val protocolVersion: String) : Connection(remoteAddress) {
+class HttpConnection(clientAddress: InetSocketAddress, val type: HttpProxyType, val targetUri: String, val protocolVersion: String) : Connection(clientAddress) {
     override fun toString(): String {
-        return "$remoteAddress->$targetUri"
+        return "$clientAddress->$targetUri"
     }
 
     override fun typeName(): String {
         return "http"
+    }
+
+    override fun targetAddress(): String {
+        return targetUri
     }
 }
 

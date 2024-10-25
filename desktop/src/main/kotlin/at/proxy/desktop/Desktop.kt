@@ -13,7 +13,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Function
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import kotlin.io.path.readBytes
@@ -33,15 +32,15 @@ class Desktop {
 
     private val mapper = ObjectMapper()
 
-    val columns = arrayOf("Remote Address", "Type", "Http Type", "Target URI", "Protocol Version", "Download Bytes", "Upload Bytes")
+    val columns = arrayOf("Remote Address", "Type", "Http Type", "Target Address", "Protocol Version", "Download Bytes", "Upload Bytes")
 
     val model = object: AbstractTableModel() {
 
         private val mapping: Array<(Connection) -> Any> = arrayOf(
-            Connection::remoteAddress,
+            Connection::clientAddress,
             Connection::typeName,
             { c -> if (c is HttpConnection) c.type else "" },
-            { c -> if (c is HttpConnection) c.targetUri else "" },
+            { c -> c.targetAddress() },
             { c -> (c as? HttpConnection)?.protocolVersion?: ""},
             Connection::downloadTrafficInBytes,
             Connection::uploadTrafficInBytes
@@ -142,7 +141,7 @@ class Desktop {
         statusBar.add(JLabel("N/A").also { label ->
             Timer(1000) {
                 server.get()?.let {
-                    label.text = server.get().metrics.upstreamTrafficEncrypted.count().toString()
+                    label.text = server.get().metrics.upstreamTrafficEncrypted.count().toULong().toString()
                 }
             }.start()
         })
@@ -152,7 +151,7 @@ class Desktop {
         statusBar.add(JLabel("N/A").also { label ->
             Timer(1000) {
                 server.get()?.let {
-                    label.text = server.get().metrics.downstreamTrafficEncrypted.count().toString()
+                    label.text = server.get().metrics.downstreamTrafficEncrypted.count().toULong().toString()
                 }
             }.start()
         })

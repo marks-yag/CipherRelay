@@ -50,7 +50,10 @@ class SocksServerHandler(private val connectionManager: ConnectionManager, clien
             if (socksRequest.type() === Socks5CommandType.CONNECT) {
                 ctx.pipeline().addLast(socketServerConnectHandler)
                 ctx.pipeline().remove(this)
-                connectionManager.addHttpConnection(ctx.channel().id(), Socks5Connection(ctx.channel().remoteAddress() as InetSocketAddress))
+                connectionManager.addHttpConnection(
+                    ctx.channel().id(),
+                    Socks5Connection(ctx.channel().remoteAddress() as InetSocketAddress, socksRequest.dstAddr(), socksRequest.dstPort())
+                )
                 ctx.fireChannelRead(socksRequest)
             } else {
                 ctx.close()
