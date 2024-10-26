@@ -39,11 +39,11 @@ class Desktop {
         private val mapping: Array<(Connection) -> Any> = arrayOf(
             Connection::clientAddress,
             Connection::typeName,
-            { c -> if (c is HttpConnection) c.type else "" },
-            { c -> c.targetAddress() },
-            { c -> (c as? HttpConnection)?.protocolVersion?: ""},
-            Connection::downloadTrafficInBytes,
-            Connection::uploadTrafficInBytes
+            { if (it is HttpConnection) it.type else "" },
+            { it.targetAddress() },
+            { (it as? HttpConnection)?.protocolVersion?: ""},
+            { DisplayUtils.toBytes(it.downloadTrafficInBytes.toDouble()) },
+            { DisplayUtils.toBytes(it.uploadTrafficInBytes.toDouble()) }
         )
 
         override fun getRowCount(): Int {
@@ -54,11 +54,11 @@ class Desktop {
             return mapping.size
         }
 
-        override fun getColumnName(column: Int): String? {
+        override fun getColumnName(column: Int): String {
             return columns[column]
         }
 
-        override fun getValueAt(rowIndex: Int, columnIndex: Int): Any? {
+        override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
             val connection = connections.get()[rowIndex]
             return mapping[columnIndex].invoke(connection)
         }
@@ -84,7 +84,7 @@ class Desktop {
     private fun show () {
         JFrame.setDefaultLookAndFeelDecorated(false)
         val frame = JFrame("At Proxy")
-        frame.setBounds(600, 600, 600, 600)
+        frame.setBounds(600, 600, 1000, 600)
         frame.layout = BorderLayout()
         frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
 
@@ -141,21 +141,21 @@ class Desktop {
         statusBar.add(JLabel("N/A").also { label ->
             Timer(1000) {
                 server.get()?.let {
-                    label.text = server.get().metrics.upstreamTrafficEncrypted.count().toULong().toString()
+                    label.text = DisplayUtils.toBytes(server.get().metrics.upstreamTrafficEncrypted.count()).toString()
                 }
             }.start()
         })
-        statusBar.add(JLabel("bytes/sec"))
+        statusBar.add(JLabel("bytes"))
 
         statusBar.add(JLabel("Downstream:"))
         statusBar.add(JLabel("N/A").also { label ->
             Timer(1000) {
                 server.get()?.let {
-                    label.text = server.get().metrics.downstreamTrafficEncrypted.count().toULong().toString()
+                    label.text = DisplayUtils.toBytes(server.get().metrics.downstreamTrafficEncrypted.count()).toString()
                 }
             }.start()
         })
-        statusBar.add(JLabel("bytes/sec"))
+        statusBar.add(JLabel("bytes"))
         return statusBar
     }
 
