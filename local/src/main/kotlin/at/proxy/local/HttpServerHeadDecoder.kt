@@ -24,7 +24,9 @@ class HttpServerHeadDecoder(private val connectionManager: ConnectionManager, va
 
     override fun channelRead0(ctx: ChannelHandlerContext, buf: ByteBuf) {
         val idx = ByteBufUtil.indexOf(CRLF.slice(), buf)
-        check(idx > 0) //TODO what if else
+        check(idx > 0) {
+            buf.toString(Charsets.UTF_8)
+        }//TODO what if else
         val data = buf.slice(0, idx)
         val seq = data.toString(Charsets.UTF_8)
         LOG.info("Http read: {}", seq)

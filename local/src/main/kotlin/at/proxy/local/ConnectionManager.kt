@@ -28,13 +28,16 @@ class Socks5Connection(clientAddress: InetSocketAddress, val requestAddress: Str
     }
 }
 
-class HttpConnection(clientAddress: InetSocketAddress, val type: HttpProxyType, val targetUri: String, val protocolVersion: String) : Connection(clientAddress) {
+class HttpConnection(clientAddress: InetSocketAddress, private val type: HttpProxyType, val targetUri: String, val protocolVersion: String) : Connection(clientAddress) {
     override fun toString(): String {
         return "$clientAddress->$targetUri"
     }
 
     override fun typeName(): String {
-        return "http"
+        return when (type) {
+            HttpProxyType.WEB -> "http"
+            HttpProxyType.TUNNEL -> "https"
+        }
     }
 
     override fun targetAddress(): String {

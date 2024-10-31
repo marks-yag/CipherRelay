@@ -28,18 +28,17 @@ class Desktop {
 
     private val timer = Executors.newSingleThreadScheduledExecutor()
 
-    private val connections = AtomicReference<List<Connection>>(emptyList<Connection>())
+    private val connections = AtomicReference(emptyList<Connection>())
 
     private val mapper = ObjectMapper()
 
-    val columns = arrayOf("Remote Address", "Type", "Http Type", "Target Address", "Protocol Version", "Download Bytes", "Upload Bytes")
+    val columns = arrayOf("Remote Address", "Type", "Target Address", "Protocol Version", "Download Traffic", "Upload Traffic")
 
     val model = object: AbstractTableModel() {
 
         private val mapping: Array<(Connection) -> Any> = arrayOf(
             Connection::clientAddress,
             Connection::typeName,
-            { if (it is HttpConnection) it.type else "" },
             { it.targetAddress() },
             { (it as? HttpConnection)?.protocolVersion?: ""},
             { DisplayUtils.toBytes(it.downloadTrafficInBytes.toDouble()) },
@@ -145,7 +144,6 @@ class Desktop {
                 }
             }.start()
         })
-        statusBar.add(JLabel("bytes"))
 
         statusBar.add(JLabel("Downstream:"))
         statusBar.add(JLabel("N/A").also { label ->
@@ -155,7 +153,6 @@ class Desktop {
                 }
             }.start()
         })
-        statusBar.add(JLabel("bytes"))
         return statusBar
     }
 
