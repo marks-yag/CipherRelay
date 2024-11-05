@@ -5,6 +5,7 @@ import at.proxy.local.HttpConnection
 import at.proxy.local.LocalConfig
 import at.proxy.local.LocalServer
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.formdev.flatlaf.FlatLightLaf
 import java.awt.BorderLayout
 import java.nio.file.Files
 import java.nio.file.Path
@@ -34,7 +35,7 @@ class Desktop {
 
     val columns = arrayOf("Remote Address", "Type", "Target Address", "Protocol Version", "Download Traffic", "Upload Traffic")
 
-    val model = object: AbstractTableModel() {
+    private val model = object: AbstractTableModel() {
 
         private val mapping: Array<(Connection) -> Any> = arrayOf(
             Connection::clientAddress,
@@ -64,7 +65,7 @@ class Desktop {
     }
 
     init {
-        timer.scheduleAtFixedRate(Runnable {
+        timer.scheduleAtFixedRate({
             server.get()?.connectionManager?.getAllConnections()?.let { connections.set(it.toList()) }
             model.fireTableDataChanged()
         }, 1, 1, TimeUnit.SECONDS)
@@ -81,7 +82,7 @@ class Desktop {
     }
 
     private fun show () {
-        JFrame.setDefaultLookAndFeelDecorated(false)
+        FlatLightLaf.setup()
         val frame = JFrame("At Proxy")
         frame.setBounds(600, 600, 1000, 600)
         frame.layout = BorderLayout()
