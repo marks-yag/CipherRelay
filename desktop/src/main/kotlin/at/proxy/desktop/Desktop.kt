@@ -7,6 +7,7 @@ import at.proxy.local.LocalServer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.formdev.flatlaf.FlatLightLaf
 import java.awt.BorderLayout
+import java.awt.Image
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -14,6 +15,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import javax.imageio.ImageIO
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import kotlin.io.path.readBytes
@@ -33,7 +35,12 @@ class Desktop {
 
     private val mapper = ObjectMapper()
 
-    val columns = arrayOf("Remote Address", "Type", "Target Address", "Protocol Version", "Download Traffic", "Upload Traffic")
+    val columns = arrayOf("Remote Address", "Type", "Target Address", "Download Traffic", "Upload Traffic")
+
+    private val configIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/config.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
+    private val startIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/start.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
+
+    private val stopIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/stop.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
 
     private val model = object: AbstractTableModel() {
 
@@ -41,7 +48,6 @@ class Desktop {
             Connection::clientAddress,
             Connection::typeName,
             { it.targetAddress() },
-            { (it as? HttpConnection)?.protocolVersion?: ""},
             { DisplayUtils.toBytes(it.downloadTrafficInBytes.toDouble()) },
             { DisplayUtils.toBytes(it.uploadTrafficInBytes.toDouble()) }
         )
@@ -116,16 +122,20 @@ class Desktop {
     ): JToolBar {
         val toolBar = JToolBar()
         toolBar.add(JButton("Configure...").also {
+            it.icon = configIcon
             it.addActionListener {
                 config(frame, configFile)
             }
         })
         toolBar.add(JButton("Start").also { button ->
+            button.icon = startIcon
             button.addActionListener {
                 if (started.compareAndSet(false, true)) {
                     start(config.get())
+                    button.icon = stopIcon
                     button.text = "Stop"
                 } else {
+                    button.icon = startIcon
                     button.text = "Start"
                     started.set(false)
                     stop()
