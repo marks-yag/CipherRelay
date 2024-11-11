@@ -45,8 +45,14 @@ class HttpConnection(clientAddress: InetSocketAddress, private val type: HttpPro
     }
 }
 
+class Stat {
+    val uploadTrafficInBytes = AtomicLong()
+    val downloadTrafficInBytes = AtomicLong()
+}
+
 class ConnectionManager {
     private val connections = ConcurrentSkipListMap<ChannelId, Connection>()
+    private val stat = ConcurrentSkipListMap<String, Stat>()
 
     fun addHttpConnection(id: ChannelId, connection: Connection) {
         connections[id] = connection
@@ -55,8 +61,18 @@ class ConnectionManager {
     fun getConnection(id: ChannelId) = connections[id] ?: throw NoSuchElementException()
 
     fun removeConnection(id: ChannelId) {
-        connections.remove(id)
+        connections.remove(id)?.let { 
+            stat.getOrPut(it.targetAddress()) {
+                Stat()
+            }.apply { 
+                uploadTrafficInBytes.addAndGet(it.uploadTrafficInBytes.get())
+                downloadTrafficInBytes.addAndGet(it.downloadTrafficInBytes.get())
+                println("hello: $stat")
+            }
+        }
     }
 
     fun getAllConnections() : Collection<Connection> = connections.values
+    
+    fun getStat() = stat.map { it .key to it.value }
 }

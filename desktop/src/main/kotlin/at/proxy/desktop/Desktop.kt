@@ -1,9 +1,9 @@
 package at.proxy.desktop
 
 import at.proxy.local.Connection
-import at.proxy.local.HttpConnection
 import at.proxy.local.LocalConfig
 import at.proxy.local.LocalServer
+import at.proxy.local.Stat
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.formdev.flatlaf.FlatLightLaf
 import java.awt.BorderLayout
@@ -32,17 +32,21 @@ class Desktop {
     private val timer = Executors.newSingleThreadScheduledExecutor()
 
     private val connections = AtomicReference(emptyList<Connection>())
+    
+    private val stats = AtomicReference(emptyList<Pair<String, Stat>>())
 
     private val mapper = ObjectMapper()
 
-    val columns = arrayOf("Remote Address", "Type", "Target Address", "Download Traffic", "Upload Traffic")
+    val activeColumns = arrayOf("Remote Address", "Type", "Target Address", "Download Traffic", "Upload Traffic")
+
+    val statColumns = arrayOf("Target Address", "Download Traffic", "Upload Traffic")
 
     private val configIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/config.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
     private val startIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/start.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
 
     private val stopIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/stop.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
 
-    private val model = object: AbstractTableModel() {
+    private val activeModel = object: AbstractTableModel() {
 
         private val mapping: Array<(Connection) -> Any> = arrayOf(
             Connection::clientAddress,
@@ -61,7 +65,7 @@ class Desktop {
         }
 
         override fun getColumnName(column: Int): String {
-            return columns[column]
+            return activeColumns[column]
         }
 
         override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
@@ -70,10 +74,40 @@ class Desktop {
         }
     }
 
+    private val statModel = object: AbstractTableModel() {
+
+        private val mapping: Array<(Pair<String, Stat>) -> Any> = arrayOf(
+            { it.first },
+            { DisplayUtils.toBytes(it.second.downloadTrafficInBytes.toDouble()) },
+            { DisplayUtils.toBytes(it.second.uploadTrafficInBytes.toDouble()) }
+        )
+
+        override fun getRowCount(): Int {
+            return stats.get().size
+        }
+
+        override fun getColumnCount(): Int {
+            return mapping.size
+        }
+
+        override fun getColumnName(column: Int): String {
+            return statColumns[column]
+        }
+
+        override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
+            val stat = stats.get()[rowIndex]
+            return mapping[columnIndex].invoke(stat)
+        }
+    }
+
     init {
         timer.scheduleAtFixedRate({
-            server.get()?.connectionManager?.getAllConnections()?.let { connections.set(it.toList()) }
-            model.fireTableDataChanged()
+            server.get()?.connectionManager?.let { 
+                connections.set(it.getAllConnections().toList())
+                stats.set(it.getStat().toList())
+            }
+            activeModel.fireTableDataChanged()
+            statModel.fireTableDataChanged()
         }, 1, 1, TimeUnit.SECONDS)
     }
 
@@ -109,10 +143,15 @@ class Desktop {
         frame.add(statusBar, "South")
 
 
-        val connectionsTable = JTable(model)
+        val connectionsTable = JTable(activeModel)
         val dashboard = JScrollPane(connectionsTable)
+        val statTable = JTable(statModel)
+        val stat = JScrollPane(statTable)
+        val tab = JTabbedPane()
+        tab.add("Active", dashboard)
+        tab.add("Stat", stat)
 
-        frame.add(dashboard, BorderLayout.CENTER)
+        frame.add(tab, BorderLayout.CENTER)
         frame.isVisible = true
     }
 
@@ -191,7 +230,7 @@ class Desktop {
             }
         })
         configDialog.add(panel)
-        configDialog.setBounds(700, 700, 300, 300)
+        configDialog.setBounds(700, 700, 500, 300)
         configDialog.isVisible = true
         return LocalConfig()
     }
