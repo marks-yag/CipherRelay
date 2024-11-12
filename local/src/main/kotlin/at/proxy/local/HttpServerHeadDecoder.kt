@@ -2,8 +2,6 @@ package at.proxy.local
 
 import com.github.yag.crypto.AESCrypto
 import com.google.common.net.HostAndPort
-import io.micrometer.core.instrument.MeterRegistry
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.Unpooled
@@ -11,9 +9,6 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.http.HttpConstants
 import io.netty.handler.codec.http.HttpMethod
-import io.netty.util.ByteProcessor
-import io.netty.util.internal.AppendableCharSequence
-import io.prometheus.metrics.model.registry.PrometheusRegistry
 import ketty.core.client.KettyClient
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
@@ -62,7 +57,7 @@ class HttpServerHeadDecoder(private val connectionManager: ConnectionManager, va
                 }
             }
         }
-        connectionManager.addHttpConnection(ctx.channel().id(), HttpConnection(ctx.channel().remoteAddress() as InetSocketAddress, httpProxyRequestHead.proxyType, httpProxyRequestHead.host + ":" + httpProxyRequestHead.port, httpProxyRequestHead.protocolVersion))
+        connectionManager.addConnection(ctx.channel().id(), HttpConnection(ctx.channel().remoteAddress() as InetSocketAddress, httpProxyRequestHead.proxyType, httpProxyRequestHead.host + ":" + httpProxyRequestHead.port, connectionManager))
         ctx.pipeline().addLast(HttpServerConnectHandler(connectionManager, client, crypto, metrics)).remove(this)
         ctx.fireChannelRead(httpProxyRequestHead)
     }

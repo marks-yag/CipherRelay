@@ -26,7 +26,7 @@ class RelayHandler(val connection: Connection, private val vc: VirtualChannel, p
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         if (msg is ByteBuf) {
-            connection.uploadTrafficInBytes.addAndGet(msg.readableBytes().toLong())
+            connection.increaseUploadTrafficInBytes(msg.readableBytes().toLong())
             metrics.upstreamTraffic.increment(msg.readableBytes().toDouble())
             val body = msg.use {
                 Unpooled.wrappedBuffer(crypto.encrypt(it.readArray()))

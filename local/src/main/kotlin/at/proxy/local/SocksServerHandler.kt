@@ -16,7 +16,6 @@
 package at.proxy.local
 
 import com.github.yag.crypto.AESCrypto
-import io.micrometer.core.instrument.MeterRegistry
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.ChannelHandlerContext
@@ -26,7 +25,6 @@ import io.netty.handler.codec.socksx.SocksVersion
 import io.netty.handler.codec.socksx.v5.*
 import ketty.core.client.KettyClient
 import org.slf4j.LoggerFactory
-import java.io.IOException
 import java.net.InetSocketAddress
 
 @Sharable
@@ -50,9 +48,9 @@ class SocksServerHandler(private val connectionManager: ConnectionManager, clien
             if (socksRequest.type() === Socks5CommandType.CONNECT) {
                 ctx.pipeline().addLast(socketServerConnectHandler)
                 ctx.pipeline().remove(this)
-                connectionManager.addHttpConnection(
+                connectionManager.addConnection(
                     ctx.channel().id(),
-                    Socks5Connection(ctx.channel().remoteAddress() as InetSocketAddress, socksRequest.dstAddr(), socksRequest.dstPort())
+                    Socks5Connection(ctx.channel().remoteAddress() as InetSocketAddress, socksRequest.dstAddr(), socksRequest.dstPort(), connectionManager)
                 )
                 ctx.fireChannelRead(socksRequest)
             } else {

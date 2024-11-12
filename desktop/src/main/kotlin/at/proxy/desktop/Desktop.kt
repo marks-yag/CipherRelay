@@ -52,8 +52,8 @@ class Desktop {
             Connection::clientAddress,
             Connection::typeName,
             { it.targetAddress() },
-            { DisplayUtils.toBytes(it.downloadTrafficInBytes.toDouble()) },
-            { DisplayUtils.toBytes(it.uploadTrafficInBytes.toDouble()) }
+            { DisplayUtils.toBytes(it.getDownloadTrafficInBytes().toDouble()) },
+            { DisplayUtils.toBytes(it.getUploadTrafficInBytes().toDouble()) }
         )
 
         override fun getRowCount(): Int {
@@ -104,7 +104,7 @@ class Desktop {
         timer.scheduleAtFixedRate({
             server.get()?.connectionManager?.let { 
                 connections.set(it.getAllConnections().toList())
-                stats.set(it.getStat().toList())
+                stats.set(it.getStat().sortedByDescending { it.second.downloadTrafficInBytes.get() })
             }
             activeModel.fireTableDataChanged()
             statModel.fireTableDataChanged()

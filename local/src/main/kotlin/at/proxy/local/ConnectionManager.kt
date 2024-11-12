@@ -5,16 +5,30 @@ import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.atomic.AtomicLong
 
-sealed class Connection(val clientAddress: InetSocketAddress) {
-    val uploadTrafficInBytes = AtomicLong()
-    val downloadTrafficInBytes = AtomicLong()
+sealed class Connection(val clientAddress: InetSocketAddress, val connectionManager: ConnectionManager) {
+    private val uploadTrafficInBytes = AtomicLong()
+    private val downloadTrafficInBytes = AtomicLong()
+    
+    fun getUploadTrafficInBytes() = uploadTrafficInBytes.get()
+    
+    fun getDownloadTrafficInBytes() = downloadTrafficInBytes.get()
+    
+    fun increaseUploadTrafficInBytes(amount: Long) {
+        uploadTrafficInBytes.addAndGet(amount)
+        connectionManager.increaseUploadTrafficInBytes(this, amount)
+    }
+    
+    fun increaseDownloadTrafficInBytes(amount: Long) {
+        downloadTrafficInBytes.addAndGet(amount)
+        connectionManager.increaseDownloadTrafficInBytes(this, amount)
+    }
 
     abstract fun typeName(): String
 
     abstract fun targetAddress(): String
 }
 
-class Socks5Connection(clientAddress: InetSocketAddress, val requestAddress: String, val requestPort: Int) : Connection(clientAddress) {
+class Socks5Connection(clientAddress: InetSocketAddress, private val requestAddress: String, private val requestPort: Int, connectionManager: ConnectionManager) : Connection(clientAddress, connectionManager) {
     override fun toString(): String {
         return clientAddress.toString()
     }
@@ -28,7 +42,7 @@ class Socks5Connection(clientAddress: InetSocketAddress, val requestAddress: Str
     }
 }
 
-class HttpConnection(clientAddress: InetSocketAddress, private val type: HttpProxyType, val targetUri: String, val protocolVersion: String) : Connection(clientAddress) {
+class HttpConnection(clientAddress: InetSocketAddress, private val type: HttpProxyType, private val targetUri: String, connectionManager: ConnectionManager) : Connection(clientAddress, connectionManager) {
     override fun toString(): String {
         return "$clientAddress->$targetUri"
     }
@@ -54,8 +68,11 @@ class ConnectionManager {
     private val connections = ConcurrentSkipListMap<ChannelId, Connection>()
     private val stat = ConcurrentSkipListMap<String, Stat>()
 
-    fun addHttpConnection(id: ChannelId, connection: Connection) {
+    fun addConnection(id: ChannelId, connection: Connection) {
         connections[id] = connection
+        stat.computeIfAbsent(connection.targetAddress()) {
+            Stat()
+        }
     }
 
     fun getConnection(id: ChannelId) = connections[id] ?: throw NoSuchElementException()
@@ -65,10 +82,21 @@ class ConnectionManager {
             stat.getOrPut(it.targetAddress()) {
                 Stat()
             }.apply { 
-                uploadTrafficInBytes.addAndGet(it.uploadTrafficInBytes.get())
-                downloadTrafficInBytes.addAndGet(it.downloadTrafficInBytes.get())
-                println("hello: $stat")
+                uploadTrafficInBytes.addAndGet(it.getUploadTrafficInBytes())
+                downloadTrafficInBytes.addAndGet(it.getDownloadTrafficInBytes())
             }
+        }
+    }
+
+    fun increaseUploadTrafficInBytes(connection: Connection, amount: Long) {
+        stat[connection.targetAddress()]?.apply {
+            uploadTrafficInBytes.addAndGet(amount)
+        }
+    }
+
+    fun increaseDownloadTrafficInBytes(connection: Connection, amount: Long) {
+        stat[connection.targetAddress()]?.apply { 
+            downloadTrafficInBytes.addAndGet(amount)
         }
     }
 
