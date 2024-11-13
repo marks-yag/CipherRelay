@@ -7,6 +7,8 @@ import io.netty.channel.Channel
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
+import ketty.core.client.KettyClient
+import ketty.core.client.client
 import ketty.utils.MemoryLeakDetector
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -20,6 +22,8 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
     private var serverEventLoopGroup: EventLoopGroup
 
     private var acceptorChannel: Channel
+    
+    private val client: KettyClient
 
     val connectionManager = ConnectionManager()
 
@@ -28,12 +32,14 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
     init {
         logger.info("Proxy Server starting...")
         serverEventLoopGroup = NioEventLoopGroup(Runtime.getRuntime().availableProcessors())
-
+        val atProxyRemoteAddress =
+            HostAndPort.fromString(config.remoteEndpoint).let { InetSocketAddress(it.host, it.port) }
+        client = client(atProxyRemoteAddress)
         serverBootstrap = ServerBootstrap()
             .channel(NioServerSocketChannel::class.java)
             .childHandler(LocalServerInitializer(
                 config.key,
-                HostAndPort.fromString(config.remoteEndpoint).let { InetSocketAddress(it.host, it.port) },
+                client,
                 connectionManager,
                 metrics)
             ).group(serverEventLoopGroup)

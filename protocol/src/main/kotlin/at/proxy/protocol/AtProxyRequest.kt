@@ -10,7 +10,9 @@ enum class AtProxyRequest: KettyRequestType {
 
     READ,
 
-    WRITE;
+    WRITE,
+    
+    STATUS;
 
     override fun getName(): String {
         return name

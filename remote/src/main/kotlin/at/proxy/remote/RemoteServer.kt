@@ -135,6 +135,9 @@ class RemoteServer(config: RemoteConfig) : AutoCloseable {
                     connection.put("echo-$connectionId", echo)
                     connection.put("request-$connectionId", request)
                 })
+                set(AtProxyRequest.STATUS, KettyRequestHandler { connection, request, echo ->
+                    echo(request.ok("hello"))
+                })
             }
         }
     }

@@ -8,15 +8,14 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.socksx.SocksPortUnificationServerHandler
 import io.netty.handler.codec.socksx.SocksVersion
+import ketty.core.client.KettyClient
 import ketty.core.client.client
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
 import java.nio.charset.Charset
 
 @Sharable
-class SelectHandler(key: String, atProxyRemoteAddress: InetSocketAddress, private val connectionManager: ConnectionManager, private val metrics: Metrics) : SimpleChannelInboundHandler<ByteBuf>() {
-
-    private val client = client(atProxyRemoteAddress)
+class SelectHandler(key: String, private val client: KettyClient, private val connectionManager: ConnectionManager, private val metrics: Metrics) : SimpleChannelInboundHandler<ByteBuf>() {
 
     private val crypto = AESCrypto(key.toByteArray())
 
