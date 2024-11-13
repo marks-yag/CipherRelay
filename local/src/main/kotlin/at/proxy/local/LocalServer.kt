@@ -39,6 +39,8 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
             ).group(serverEventLoopGroup)
         acceptorChannel = serverBootstrap.bind(config.port).syncUninterruptibly().channel()
     }
+    
+    fun getEndpoint() = acceptorChannel.localAddress() as InetSocketAddress
 
     override fun close() {
         logger.info("Proxy Server shutting down...")

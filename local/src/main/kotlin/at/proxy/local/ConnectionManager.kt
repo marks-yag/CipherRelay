@@ -78,14 +78,7 @@ class ConnectionManager {
     fun getConnection(id: ChannelId) = connections[id] ?: throw NoSuchElementException()
 
     fun removeConnection(id: ChannelId) {
-        connections.remove(id)?.let { 
-            stat.getOrPut(it.targetAddress()) {
-                Stat()
-            }.apply { 
-                uploadTrafficInBytes.addAndGet(it.getUploadTrafficInBytes())
-                downloadTrafficInBytes.addAndGet(it.getDownloadTrafficInBytes())
-            }
-        }
+        connections.remove(id)
     }
 
     fun increaseUploadTrafficInBytes(connection: Connection, amount: Long) {
