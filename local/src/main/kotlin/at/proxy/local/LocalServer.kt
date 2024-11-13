@@ -52,6 +52,7 @@ class LocalServer(config: LocalConfig) : AutoCloseable {
         logger.info("Proxy Server shutting down...")
         acceptorChannel.close().syncUninterruptibly()
         serverEventLoopGroup.shutdownGracefully().syncUninterruptibly()
+        client.close()
         logger.info("shutdown completed!")
     }
 

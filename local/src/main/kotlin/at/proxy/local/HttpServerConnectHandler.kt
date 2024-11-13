@@ -19,13 +19,14 @@ import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.Encoders.Companion.encode
 import at.proxy.protocol.VirtualChannel
 import com.github.yag.crypto.AESCrypto
-import io.micrometer.core.instrument.Counter
-import io.micrometer.core.instrument.MeterRegistry
 import io.netty.buffer.Unpooled
-import io.netty.channel.*
 import io.netty.channel.ChannelHandler.Sharable
+import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.SimpleChannelInboundHandler
 import ketty.core.client.KettyClient
-import ketty.core.common.*
+import ketty.core.common.isSuccessful
+import ketty.core.common.readArray
+import ketty.core.common.use
 import org.slf4j.LoggerFactory
 
 @Sharable

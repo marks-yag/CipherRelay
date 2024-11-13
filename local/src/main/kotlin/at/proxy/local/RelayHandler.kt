@@ -4,8 +4,6 @@ import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.Encoders.Companion.encode
 import at.proxy.protocol.VirtualChannel
 import com.github.yag.crypto.AESCrypto
-import io.micrometer.core.instrument.Counter
-import io.micrometer.core.instrument.MeterRegistry
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext

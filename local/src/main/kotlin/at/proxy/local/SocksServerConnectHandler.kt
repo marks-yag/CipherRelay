@@ -18,10 +18,10 @@ package at.proxy.local
 import at.proxy.protocol.AtProxyRequest
 import at.proxy.protocol.VirtualChannel
 import com.github.yag.crypto.AESCrypto
-import io.micrometer.core.instrument.MeterRegistry
 import io.netty.buffer.Unpooled
-import io.netty.channel.*
 import io.netty.channel.ChannelHandler.Sharable
+import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.socksx.SocksMessage
 import io.netty.handler.codec.socksx.v5.DefaultSocks5CommandResponse
 import io.netty.handler.codec.socksx.v5.Socks5CommandRequest
@@ -30,7 +30,6 @@ import ketty.core.client.KettyClient
 import ketty.core.common.isSuccessful
 import ketty.core.common.use
 import org.slf4j.LoggerFactory
-import java.io.IOException
 
 @Sharable
 class SocksServerConnectHandler(private val connectionManager: ConnectionManager, private val client: KettyClient, private val crypto: AESCrypto, private val metrics: Metrics) : SimpleChannelInboundHandler<SocksMessage>() {

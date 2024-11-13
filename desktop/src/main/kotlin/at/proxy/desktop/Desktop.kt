@@ -7,7 +7,6 @@ import at.proxy.local.Stat
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.formdev.flatlaf.FlatLightLaf
 import java.awt.BorderLayout
-import java.awt.FlowLayout
 import java.awt.Image
 import java.nio.file.Files
 import java.nio.file.Path

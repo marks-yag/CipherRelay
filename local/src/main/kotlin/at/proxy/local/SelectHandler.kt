@@ -1,7 +1,6 @@
 package at.proxy.local
 
 import com.github.yag.crypto.AESCrypto
-import io.micrometer.core.instrument.MeterRegistry
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.ChannelHandlerContext
@@ -9,10 +8,7 @@ import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.socksx.SocksPortUnificationServerHandler
 import io.netty.handler.codec.socksx.SocksVersion
 import ketty.core.client.KettyClient
-import ketty.core.client.client
 import org.slf4j.LoggerFactory
-import java.net.InetSocketAddress
-import java.nio.charset.Charset
 
 @Sharable
 class SelectHandler(key: String, private val client: KettyClient, private val connectionManager: ConnectionManager, private val metrics: Metrics) : SimpleChannelInboundHandler<ByteBuf>() {
