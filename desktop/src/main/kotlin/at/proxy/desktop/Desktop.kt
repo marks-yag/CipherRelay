@@ -41,9 +41,9 @@ class Desktop {
 
     val statColumns = arrayOf("Target Address", "Download Traffic", "Upload Traffic")
 
+    private val proxyIcon = ImageIO.read(Desktop::class.java.getResource("/proxy.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH)
     private val configIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/config.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
     private val startIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/start.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
-
     private val stopIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/stop.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
 
     private val activeModel = object: AbstractTableModel() {
@@ -125,6 +125,7 @@ class Desktop {
         FlatLightLaf.setup()
         val frame = JFrame("At Proxy")
         frame.setBounds(600, 600, 1000, 600)
+        frame.iconImage = proxyIcon
         frame.layout = BorderLayout()
         frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
 
