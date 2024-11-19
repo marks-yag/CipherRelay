@@ -21,6 +21,7 @@ import javax.swing.table.AbstractTableModel
 import kotlin.io.path.readBytes
 import kotlin.io.path.writeText
 
+
 class Desktop {
 
     private val config = AtomicReference<LocalConfig>()
@@ -123,7 +124,7 @@ class Desktop {
 
     private fun show () {
         FlatLightLaf.setup()
-        val frame = JFrame("At Proxy")
+        val frame = JFrame("Proxy")
         frame.setBounds(600, 600, 1000, 600)
         frame.iconImage = proxyIcon
         frame.layout = BorderLayout()
@@ -218,29 +219,25 @@ class Desktop {
 
     private fun config(frame: JFrame, configFile: Path) : LocalConfig {
         val configDialog = JDialog(frame, "Configure")
-        val panel = JPanel()
-        panel.add(JLabel("Local Port:"))
-        val jTextFieldLocalPort = JTextField(config.get().port.toString(), 32)
-        panel.add(jTextFieldLocalPort)
-        panel.add(JLabel("Remote Address:"))
-        val jTextFieldRemoteAddress = JTextField(config.get().remoteEndpoint, 32)
-        panel.add(jTextFieldRemoteAddress)
-        panel.add(JLabel("Shared Key"))
-        val jPasswordFieldSharedKey = JPasswordField(config.get().key, 32)
-        panel.add(jPasswordFieldSharedKey)
-        panel.add(JButton("Save").also {
-            it.addActionListener {
-                val newConfig = LocalConfig()
-                newConfig.port = jTextFieldLocalPort.text.toInt()
-                newConfig.remoteEndpoint = jTextFieldRemoteAddress.text
-                newConfig.key = String(jPasswordFieldSharedKey.password)
-                configFile.writeText(mapper.writeValueAsString(newConfig))
-                configDialog.isVisible = false
-                config.set(newConfig)
-            }
+        val form = Form {
+            LocalConfig()
+        }
+        form.add("Local Port:", JTextField(config.get().port.toString(), 32)) { input, config ->
+            config.port = input.text.toInt()
+        }
+        form.add("Remote Address:", JTextField(config.get().remoteEndpoint, 32)) { input, config ->
+            config.remoteEndpoint = input.text
+        }
+        form.add("Shared Key:", JPasswordField(config.get().key, 32)) { input, config ->
+            config.key = String(input.password)
+        }
+
+        configDialog.add(form.create {
+            configFile.writeText(mapper.writeValueAsString(it))
+            configDialog.isVisible = false
+            config.set(it)
         })
-        configDialog.add(panel)
-        configDialog.setBounds(700, 700, 500, 300)
+        configDialog.setBounds(700, 700, 300, 200)
         configDialog.isVisible = true
         return LocalConfig()
     }
