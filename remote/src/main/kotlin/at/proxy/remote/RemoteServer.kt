@@ -18,6 +18,8 @@ import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.util.ReferenceCountUtil
 import io.netty.util.concurrent.DefaultThreadFactory
 import ketty.core.common.Packet
+import ketty.core.common.RequestPacket
+import ketty.core.common.ResponsePacket
 import ketty.core.common.ok
 import ketty.core.common.readArray
 import ketty.core.common.status
@@ -80,17 +82,17 @@ class RemoteServer(config: RemoteConfig) : AutoCloseable {
 
                             override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
                                 if (msg is ByteBuf) {
-                                    val echo = connection.get("echo-$connectionId") as (Packet<ResponseHeader>) -> Unit
-                                    val connectionRequest = connection.get("request-$connectionId") as (Packet<RequestHeader>)
+                                    val echo = connection.get("echo-$connectionId") as (ResponsePacket) -> Unit
+                                    val connectionRequest = connection.get("request-$connectionId") as (RequestPacket)
                                     val encrypt = Unpooled.wrappedBuffer(crypto.encrypt(msg.readArray()))
-                                    echo(connectionRequest.status(StatusCode.PARTIAL_CONTENT, encrypt))
+                                    echo.invoke(connectionRequest.status(StatusCode.PARTIAL_CONTENT, encrypt))
                                 }
                                 ReferenceCountUtil.release(msg)
                             }
 
                             override fun channelInactive(ctx: ChannelHandlerContext) {
-                                val echo = connection.get("echo-$connectionId") as (Packet<ResponseHeader>) -> Unit
-                                val connectionRequest = connection.get("request-$connectionId") as (Packet<RequestHeader>)
+                                val echo = connection.get("echo-$connectionId") as (ResponsePacket) -> Unit
+                                val connectionRequest = connection.get("request-$connectionId") as (RequestPacket)
                                 echo(connectionRequest.status(StatusCode.OK))
                             }
 

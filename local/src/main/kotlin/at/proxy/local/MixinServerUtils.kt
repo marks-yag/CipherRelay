@@ -26,8 +26,8 @@ object MixinServerUtils {
         val vc = VirtualChannel(connect.body.slice().readLong())
         vc.encode().use {
             client.send(AtProxyRequest.READ, it) { response ->
-                connection.increaseDownloadTrafficInBytes(response.header.thrift.contentLength.toLong())
-                metrics.downstreamTrafficEncrypted.increment(response.header.thrift.contentLength.toDouble())
+                connection.increaseDownloadTrafficInBytes(response.length().toLong())
+                metrics.downstreamTrafficEncrypted.increment(response.length().toDouble())
                 if (response.isSuccessful()) {
                     log.debug("Received read response, length: {}.", response.body.readableBytes())
                     if (response.status() == StatusCode.PARTIAL_CONTENT) {
