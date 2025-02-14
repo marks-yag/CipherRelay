@@ -15,7 +15,7 @@ object DisplayUtils {
     }
 
     fun toBytes(amount: Double) : Bytes {
-        return Unit.values().firstOrNull { it.scale < amount }?.let {
+        return Unit.entries.firstOrNull { it.scale < amount }?.let {
             Bytes(amount / it.scale, it)
         } ?: Bytes(amount, Unit.KB)
     }

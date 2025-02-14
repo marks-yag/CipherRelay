@@ -125,7 +125,8 @@ class Desktop {
     private fun show () {
         FlatLightLaf.setup()
         val frame = JFrame("Proxy")
-        frame.setBounds(600, 600, 1000, 600)
+        frame.setSize(1000, 600)
+        frame.isLocationByPlatform = true
         frame.iconImage = proxyIcon
         frame.layout = BorderLayout()
         frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
@@ -237,7 +238,8 @@ class Desktop {
             configDialog.isVisible = false
             config.set(it)
         })
-        configDialog.setBounds(700, 700, 300, 200)
+        configDialog.setSize(300, 200)
+        configDialog.setLocationRelativeTo(frame)
         configDialog.isVisible = true
         return LocalConfig()
     }
