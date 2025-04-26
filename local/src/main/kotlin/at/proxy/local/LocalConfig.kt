@@ -12,5 +12,8 @@ class LocalConfig {
 
     @Value
     var remoteEndpoint = "127.0.0.1:9528"
+    
+    @Value
+    var autoStart = false
 
 }

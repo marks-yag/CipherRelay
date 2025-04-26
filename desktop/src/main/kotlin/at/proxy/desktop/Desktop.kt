@@ -169,7 +169,7 @@ class Desktop {
                 config(frame, configFile)
             }
         })
-        toolBar.add(JButton("Start").also { button ->
+        val button = JButton("Start").also { button ->
             button.icon = startIcon
             button.addActionListener {
                 if (started.compareAndSet(false, true)) {
@@ -183,7 +183,11 @@ class Desktop {
                     stop()
                 }
             }
-        })
+        }
+        toolBar.add(button)
+        if (config.get().autoStart) {
+            button.doClick()
+        }
         return toolBar
     }
 
@@ -218,7 +222,7 @@ class Desktop {
         return statusBar
     }
 
-    private fun config(frame: JFrame, configFile: Path) : LocalConfig {
+    private fun config(frame: JFrame, configFile: Path) {
         val configDialog = JDialog(frame, "Configure")
         val form = Form {
             LocalConfig()
@@ -232,6 +236,9 @@ class Desktop {
         form.add("Shared Key:", JPasswordField(config.get().key, 32)) { input, config ->
             config.key = String(input.password)
         }
+        form.add("Auto Start:", JCheckBox("", config.get().autoStart)) { input, config ->
+            config.autoStart = input.isSelected
+        }
 
         configDialog.add(form.create {
             configFile.writeText(mapper.writeValueAsString(it))
@@ -241,7 +248,6 @@ class Desktop {
         configDialog.setSize(300, 200)
         configDialog.setLocationRelativeTo(frame)
         configDialog.isVisible = true
-        return LocalConfig()
     }
 
     private fun start(config: LocalConfig) {
