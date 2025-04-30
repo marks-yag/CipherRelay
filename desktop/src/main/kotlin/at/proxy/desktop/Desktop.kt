@@ -3,6 +3,7 @@ package at.proxy.desktop
 import at.proxy.local.Connection
 import at.proxy.local.LocalConfig
 import at.proxy.local.LocalServer
+import at.proxy.local.ProxyConnection
 import at.proxy.local.Stat
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.formdev.flatlaf.FlatLightLaf
@@ -35,7 +36,7 @@ class Desktop {
 
     private val timer = Executors.newSingleThreadScheduledExecutor()
 
-    private val connections = AtomicReference(emptyList<Connection>())
+    private val connections = AtomicReference(emptyList<ProxyConnection>())
     
     private val stats = AtomicReference(emptyList<Pair<String, Stat>>())
 
@@ -52,15 +53,15 @@ class Desktop {
 
     private val activeModel = object: AbstractTableModel() {
 
-        private val mapping: Array<(Connection) -> Any?> = arrayOf(
-            Connection::clientAddress,
-            Connection::typeName,
+        private val mapping: Array<(ProxyConnection) -> Any?> = arrayOf(
+            { it.connection.clientAddress},
+            { it.connection.typeName() },
             { it.process?.processID },
             { it.process?.name },
             { it.process?.startTime?.let { LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneId.systemDefault()) } },
-            { it.targetAddress() },
-            { DisplayUtils.toBytes(it.getDownloadTrafficInBytes().toDouble()) },
-            { DisplayUtils.toBytes(it.getUploadTrafficInBytes().toDouble()) }
+            { it.connection.targetAddress() },
+            { DisplayUtils.toBytes(it.connection.getDownloadTrafficInBytes().toDouble()) },
+            { DisplayUtils.toBytes(it.connection.getUploadTrafficInBytes().toDouble()) }
         )
 
         override fun getRowCount(): Int {

@@ -6,14 +6,13 @@ import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.atomic.AtomicLong
 
 import oshi.SystemInfo
+import oshi.software.os.InternetProtocolStats
 import oshi.software.os.OSProcess
 import oshi.software.os.OperatingSystem
 
 sealed class Connection(val clientAddress: InetSocketAddress, val connectionManager: ConnectionManager) {
     private val uploadTrafficInBytes = AtomicLong()
     private val downloadTrafficInBytes = AtomicLong()
-    
-    val process = ProcessResolver.getConnectionDetails(clientAddress.port)?.let { ProcessResolver.getProcess(it) }
     
     fun getUploadTrafficInBytes() = uploadTrafficInBytes.get()
     
@@ -70,6 +69,8 @@ class Stat {
     val downloadTrafficInBytes = AtomicLong()
 }
 
+data class ProxyConnection(val connection: Connection, val ipConnection: InternetProtocolStats.IPConnection?, val process: OSProcess?)
+
 class ConnectionManager {
     private val connections = ConcurrentSkipListMap<ChannelId, Connection>()
     private val stat = ConcurrentSkipListMap<String, Stat>()
@@ -99,24 +100,36 @@ class ConnectionManager {
         }
     }
 
-    fun getAllConnections() : Collection<Connection> = connections.values
+    fun getAllConnections() : Collection<ProxyConnection> {
+        val systemInfo = SystemInfo()
+        val os: OperatingSystem = systemInfo.operatingSystem
+        val portToConnection = os.internetProtocolStats.connections.groupBy { it.localPort }.mapValues { it.value.first() }
+        
+        return connections.values.map { 
+            val ipConnection = portToConnection[it.clientAddress.port]
+            val process = ipConnection?.let { os.getProcess(it.getowningProcessId()) }
+            ProxyConnection(it, ipConnection, process)
+        }
+    }
     
     fun getStat() = stat.map { it .key to it.value }
 }
 
-private object ProcessResolver {
+class ProcessSnapshot {
     private val systemInfo = SystemInfo()
     private val os: OperatingSystem = systemInfo.operatingSystem
 
-    fun getConnectionDetails(port: Int) : Int? {
-        return os.internetProtocolStats.connections
-            .filter { it.localPort == port }
-            .map {
-                it.getowningProcessId()
-            }.singleOrNull()
+    private val portToConnection = os.internetProtocolStats.connections.groupBy { it.localPort }.mapValues { it.value.first() }
+    
+    private val pidToProcess = HashMap<Int, OSProcess>()
+    
+    fun getConnectionDetails(port: Int) : InternetProtocolStats.IPConnection? {
+        return portToConnection[port]
     }
     
     fun getProcess(pid: Int): OSProcess? {
-        return os.getProcess(pid)
+        return pidToProcess.getOrPut(pid) {
+            os.getProcess(pid)
+        }
     }
 }
