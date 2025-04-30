@@ -38,7 +38,7 @@ class Desktop {
 
     private val mapper = ObjectMapper()
 
-    val activeColumns = arrayOf("Remote Address", "Type", "Target Address", "Download Traffic", "Upload Traffic")
+    val activeColumns = arrayOf("Remote Address", "Type", "Pid", "Process Name", "Target Address", "Download Traffic", "Upload Traffic")
 
     val statColumns = arrayOf("Target Address", "Download Traffic", "Upload Traffic")
 
@@ -52,6 +52,8 @@ class Desktop {
         private val mapping: Array<(Connection) -> Any> = arrayOf(
             Connection::clientAddress,
             Connection::typeName,
+            { it.pid?: "N/A" },
+            { it.processName?: "N/A" },
             { it.targetAddress() },
             { DisplayUtils.toBytes(it.getDownloadTrafficInBytes().toDouble()) },
             { DisplayUtils.toBytes(it.getUploadTrafficInBytes().toDouble()) }
