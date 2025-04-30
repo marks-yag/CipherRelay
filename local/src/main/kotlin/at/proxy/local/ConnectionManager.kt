@@ -6,15 +6,14 @@ import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.atomic.AtomicLong
 
 import oshi.SystemInfo
+import oshi.software.os.OSProcess
 import oshi.software.os.OperatingSystem
 
 sealed class Connection(val clientAddress: InetSocketAddress, val connectionManager: ConnectionManager) {
     private val uploadTrafficInBytes = AtomicLong()
     private val downloadTrafficInBytes = AtomicLong()
     
-    val pid = ProcessResolver.getConnectionDetails(clientAddress.port)
-    
-    val processName = pid?.let { ProcessResolver.getProcessName(it) }
+    val process = ProcessResolver.getConnectionDetails(clientAddress.port)?.let { ProcessResolver.getProcess(it) }
     
     fun getUploadTrafficInBytes() = uploadTrafficInBytes.get()
     
@@ -117,7 +116,7 @@ private object ProcessResolver {
             }.singleOrNull()
     }
     
-    fun getProcessName(pid: Int): String? {
-        return os.getProcess(pid)?.name
+    fun getProcess(pid: Int): OSProcess? {
+        return os.getProcess(pid)
     }
 }

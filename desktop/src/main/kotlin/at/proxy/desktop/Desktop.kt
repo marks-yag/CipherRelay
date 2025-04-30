@@ -11,6 +11,9 @@ import java.awt.Image
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -38,7 +41,7 @@ class Desktop {
 
     private val mapper = ObjectMapper()
 
-    val activeColumns = arrayOf("Remote Address", "Type", "Pid", "Process Name", "Target Address", "Download Traffic", "Upload Traffic")
+    val activeColumns = arrayOf("Remote Address", "Type", "Pid", "Process Name", "Start Time", "Target Address", "Download Traffic", "Upload Traffic")
 
     val statColumns = arrayOf("Target Address", "Download Traffic", "Upload Traffic")
 
@@ -49,11 +52,12 @@ class Desktop {
 
     private val activeModel = object: AbstractTableModel() {
 
-        private val mapping: Array<(Connection) -> Any> = arrayOf(
+        private val mapping: Array<(Connection) -> Any?> = arrayOf(
             Connection::clientAddress,
             Connection::typeName,
-            { it.pid?: "N/A" },
-            { it.processName?: "N/A" },
+            { it.process?.processID },
+            { it.process?.name },
+            { it.process?.startTime?.let { LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneId.systemDefault()) } },
             { it.targetAddress() },
             { DisplayUtils.toBytes(it.getDownloadTrafficInBytes().toDouble()) },
             { DisplayUtils.toBytes(it.getUploadTrafficInBytes().toDouble()) }
@@ -73,7 +77,7 @@ class Desktop {
 
         override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
             val connection = connections.get()[rowIndex]
-            return mapping[columnIndex].invoke(connection)
+            return mapping[columnIndex].invoke(connection) ?: "N/A"
         }
     }
 
