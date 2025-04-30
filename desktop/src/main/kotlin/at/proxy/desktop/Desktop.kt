@@ -42,9 +42,22 @@ class Desktop {
 
     private val mapper = ObjectMapper()
 
-    val activeColumns = arrayOf("Remote Address", "Type", "Pid", "Process Name", "Start Time", "Target Address", "Download Traffic", "Upload Traffic")
+    val activeColumns: Array<Pair<String, (ProxyConnection) -> Any?>> = arrayOf(
+        "Pid" to { it.process?.processID },
+        "Process Name" to { it.process?.name },
+        "Start Time" to { it.process?.startTime?.let { LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneId.systemDefault()) } },
+        "Remote Address" to { it.connection.clientAddress},
+        "Type" to { it.connection.typeName() },
+        "Target Address" to { it.connection.targetAddress() },
+        "Download Traffic" to { DisplayUtils.toBytes(it.connection.getDownloadTrafficInBytes().toDouble()) },
+        "Upload Traffic" to { DisplayUtils.toBytes(it.connection.getUploadTrafficInBytes().toDouble()) }
+    )
 
-    val statColumns = arrayOf("Target Address", "Download Traffic", "Upload Traffic")
+    val statColumns: Array<Pair<String, (Pair<String, Stat>) -> Any>> = arrayOf(
+        "Target Address" to { it.first },
+        "Download Traffic" to { DisplayUtils.toBytes(it.second.downloadTrafficInBytes.toDouble()) },
+        "Upload Traffic" to { DisplayUtils.toBytes(it.second.uploadTrafficInBytes.toDouble()) }
+    )
 
     private val proxyIcon = ImageIO.read(Desktop::class.java.getResource("/proxy.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH)
     private val configIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/config.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
@@ -53,58 +66,41 @@ class Desktop {
 
     private val activeModel = object: AbstractTableModel() {
 
-        private val mapping: Array<(ProxyConnection) -> Any?> = arrayOf(
-            { it.connection.clientAddress},
-            { it.connection.typeName() },
-            { it.process?.processID },
-            { it.process?.name },
-            { it.process?.startTime?.let { LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneId.systemDefault()) } },
-            { it.connection.targetAddress() },
-            { DisplayUtils.toBytes(it.connection.getDownloadTrafficInBytes().toDouble()) },
-            { DisplayUtils.toBytes(it.connection.getUploadTrafficInBytes().toDouble()) }
-        )
-
         override fun getRowCount(): Int {
             return connections.get().size
         }
 
         override fun getColumnCount(): Int {
-            return mapping.size
+            return activeColumns.size
         }
 
         override fun getColumnName(column: Int): String {
-            return activeColumns[column]
+            return activeColumns[column].first
         }
 
         override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
             val connection = connections.get()[rowIndex]
-            return mapping[columnIndex].invoke(connection) ?: "N/A"
+            return activeColumns[columnIndex].second.invoke(connection) ?: "N/A"
         }
     }
 
     private val statModel = object: AbstractTableModel() {
-
-        private val mapping: Array<(Pair<String, Stat>) -> Any> = arrayOf(
-            { it.first },
-            { DisplayUtils.toBytes(it.second.downloadTrafficInBytes.toDouble()) },
-            { DisplayUtils.toBytes(it.second.uploadTrafficInBytes.toDouble()) }
-        )
 
         override fun getRowCount(): Int {
             return stats.get().size
         }
 
         override fun getColumnCount(): Int {
-            return mapping.size
+            return statColumns.size
         }
 
         override fun getColumnName(column: Int): String {
-            return statColumns[column]
+            return statColumns[column].first
         }
 
         override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
             val stat = stats.get()[rowIndex]
-            return mapping[columnIndex].invoke(stat)
+            return statColumns[columnIndex].second.invoke(stat)
         }
     }
 
