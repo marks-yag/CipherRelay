@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.formdev.flatlaf.FlatLightLaf
 import java.awt.BorderLayout
 import java.awt.Image
+import java.net.InetSocketAddress
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -66,9 +67,11 @@ class Desktop {
     private val stopIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/stop.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
 
     private val activeModel = object: AbstractTableModel() {
+        
+        private var connectionSnapshot: List<ProxyConnection> = connections.get().map { it }
 
         override fun getRowCount(): Int {
-            return connections.get().size
+            return connectionSnapshot.size
         }
 
         override fun getColumnCount(): Int {
@@ -80,11 +83,14 @@ class Desktop {
         }
 
         override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
-            val connection = connections.get()[rowIndex]
+            val connection = connectionSnapshot[rowIndex]
             return activeColumns[columnIndex].second.invoke(connection) ?: "N/A"
         }
-        
-        
+
+        override fun fireTableDataChanged() {
+            connectionSnapshot = connections.get().map { it }
+            super.fireTableDataChanged()
+        }
     }
 
     private val statModel = object: AbstractTableModel() {
@@ -109,7 +115,7 @@ class Desktop {
 
     init {
         timer.scheduleAtFixedRate({
-            server.get()?.connectionManager?.let { 
+            server.get()?.connectionManager?.let {
                 connections.set(it.getAllConnections().toList())
                 stats.set(it.getStat().sortedByDescending { it.second.downloadTrafficInBytes.get() })
             }
@@ -117,7 +123,7 @@ class Desktop {
             val selectedLocalAddress = connectionTable.selectedRow.takeIf { it != -1 }?.let {
                 connectionTable.model.getValueAt(it, 3)
             }
-            
+
             activeModel.fireTableDataChanged()
             (0 until activeModel.rowCount).firstOrNull() { row ->
                 activeModel.getValueAt(row, 3) == selectedLocalAddress
