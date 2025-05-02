@@ -1,14 +1,13 @@
 package at.proxy.local
 
 import io.netty.channel.ChannelId
-import java.net.InetSocketAddress
-import java.util.concurrent.ConcurrentSkipListMap
-import java.util.concurrent.atomic.AtomicLong
-
 import oshi.SystemInfo
 import oshi.software.os.InternetProtocolStats
 import oshi.software.os.OSProcess
 import oshi.software.os.OperatingSystem
+import java.net.InetSocketAddress
+import java.util.concurrent.ConcurrentSkipListMap
+import java.util.concurrent.atomic.AtomicLong
 
 sealed class Connection(val clientAddress: InetSocketAddress, val connectionManager: ConnectionManager) {
     private val uploadTrafficInBytes = AtomicLong()

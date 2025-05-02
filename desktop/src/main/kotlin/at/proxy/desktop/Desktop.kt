@@ -1,6 +1,5 @@
 package at.proxy.desktop
 
-import at.proxy.local.Connection
 import at.proxy.local.LocalConfig
 import at.proxy.local.LocalServer
 import at.proxy.local.ProxyConnection
@@ -24,7 +23,6 @@ import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import kotlin.io.path.readBytes
 import kotlin.io.path.writeText
-import kotlin.math.log
 
 
 class Desktop {
