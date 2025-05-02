@@ -24,6 +24,7 @@ import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import kotlin.io.path.readBytes
 import kotlin.io.path.writeText
+import kotlin.math.log
 
 
 class Desktop {
@@ -35,6 +36,8 @@ class Desktop {
     private val started = AtomicBoolean()
 
     private val timer = Executors.newSingleThreadScheduledExecutor()
+    
+    private val connectionTableRef = AtomicReference<JTable>()
 
     private val connections = AtomicReference(emptyList<ProxyConnection>())
     
@@ -82,6 +85,8 @@ class Desktop {
             val connection = connections.get()[rowIndex]
             return activeColumns[columnIndex].second.invoke(connection) ?: "N/A"
         }
+        
+        
     }
 
     private val statModel = object: AbstractTableModel() {
@@ -110,7 +115,17 @@ class Desktop {
                 connections.set(it.getAllConnections().toList())
                 stats.set(it.getStat().sortedByDescending { it.second.downloadTrafficInBytes.get() })
             }
+            val connectionTable = connectionTableRef.get() ?: return@scheduleAtFixedRate
+            val selectedLocalAddress = connectionTable.selectedRow.takeIf { it != -1 }?.let {
+                connectionTable.model.getValueAt(it, 3)
+            }
+            
             activeModel.fireTableDataChanged()
+            (0 until activeModel.rowCount).firstOrNull() { row ->
+                activeModel.getValueAt(row, 3) == selectedLocalAddress
+            }?.let {
+                connectionTable.changeSelection(it, 3, false, false)
+            }
             statModel.fireTableDataChanged()
         }, 1, 1, TimeUnit.SECONDS)
     }
@@ -147,9 +162,10 @@ class Desktop {
 
         val statusBar = createStatusBar()
         frame.add(statusBar, "South")
-
-
+        
         val connectionsTable = JTable(activeModel)
+        connectionsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        connectionTableRef.set(connectionsTable)
         val dashboard = JScrollPane(connectionsTable)
         val statTable = JTable(statModel)
         val stat = JScrollPane(statTable)
