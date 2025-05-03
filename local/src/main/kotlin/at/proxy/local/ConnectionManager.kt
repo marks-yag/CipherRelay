@@ -113,22 +113,3 @@ class ConnectionManager {
     
     fun getStat() = stat.map { it .key to it.value }
 }
-
-class ProcessSnapshot {
-    private val systemInfo = SystemInfo()
-    private val os: OperatingSystem = systemInfo.operatingSystem
-
-    private val portToConnection = os.internetProtocolStats.connections.groupBy { it.localPort }.mapValues { it.value.first() }
-    
-    private val pidToProcess = HashMap<Int, OSProcess>()
-    
-    fun getConnectionDetails(port: Int) : InternetProtocolStats.IPConnection? {
-        return portToConnection[port]
-    }
-    
-    fun getProcess(pid: Int): OSProcess? {
-        return pidToProcess.getOrPut(pid) {
-            os.getProcess(pid)
-        }
-    }
-}
