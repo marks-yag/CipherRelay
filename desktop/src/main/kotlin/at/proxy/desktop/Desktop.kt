@@ -48,9 +48,8 @@ class Desktop {
     private val mapper = ObjectMapper()
 
     val activeColumns: Array<Pair<String, (ProxyConnection) -> Any?>> = arrayOf(
-        "Pid" to { it.process?.processID },
+        "Process ID" to { it.process?.processID },
         "Process Name" to { it.process?.name },
-        "Start Time" to { it.process?.startTime?.let { LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneId.systemDefault()) } },
         "Remote Address" to { it.connection.clientAddress},
         "Type" to { it.connection.typeName() },
         "Target Address" to { it.connection.targetAddress() },
