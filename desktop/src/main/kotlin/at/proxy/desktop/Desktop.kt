@@ -133,14 +133,14 @@ class Desktop {
                 stats.set(it.getStat().sortedByDescending { it.second.downloadTrafficInBytes.get() })
             }
             val selectedLocalAddress = connectionTable.selectedRow.takeIf { it != -1 }?.let {
-                connectionTable.model.getValueAt(it, 3)
+                connectionTable.model.getValueAt(it, 2)
             }
 
             activeModel.fireTableDataChanged()
             (0 until activeModel.rowCount).firstOrNull() { row ->
-                activeModel.getValueAt(row, 3) == selectedLocalAddress
+                activeModel.getValueAt(row, 2) == selectedLocalAddress
             }?.let {
-                connectionTable.changeSelection(it, 3, false, false)
+                connectionTable.changeSelection(it, 2, false, false)
             }
             
             val selectedTargetAddress = statTable.selectedRow.takeIf { it!= -1 }?.let {
@@ -166,7 +166,6 @@ class Desktop {
     }
 
     private fun show () {
-
         val frame = JFrame("Proxy")
         frame.setSize(1000, 600)
         frame.isLocationByPlatform = true
