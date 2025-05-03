@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.imageio.ImageIO
 import javax.swing.*
-import javax.swing.table.AbstractTableModel
 import kotlin.io.path.readBytes
 import kotlin.io.path.writeText
 
@@ -50,110 +49,48 @@ class Desktop {
     private val startIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/start.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
     private val stopIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/stop.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
 
-    private val activeModel = object: AbstractTableModel() {
+    private val connectionTableModel = ConnectionTableModel(connections)
 
-        val activeColumns: Array<Pair<String, (ProxyConnection) -> Any?>> = arrayOf(
-            "Process ID" to { it.process?.processID },
-            "Process Name" to { it.process?.name },
-            "Remote Address" to { it.connection.clientAddress},
-            "Type" to { it.connection.typeName() },
-            "Target Address" to { it.connection.targetAddress() },
-            "Download Traffic" to { DisplayUtils.toBytes(it.connection.getDownloadTrafficInBytes().toDouble()) },
-            "Upload Traffic" to { DisplayUtils.toBytes(it.connection.getUploadTrafficInBytes().toDouble()) }
-        )
-        
-        private var connectionSnapshot: List<ProxyConnection> = connections.get()
+    private val statTableModel = StatTableModel(stats)
 
-        override fun getRowCount(): Int {
-            return connectionSnapshot.size
-        }
-
-        override fun getColumnCount(): Int {
-            return activeColumns.size
-        }
-
-        override fun getColumnName(column: Int): String {
-            return activeColumns[column].first
-        }
-
-        override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
-            val connection = connectionSnapshot[rowIndex]
-            return activeColumns[columnIndex].second.invoke(connection) ?: "N/A"
-        }
-
-        override fun fireTableDataChanged() {
-            connectionSnapshot = connections.get().map { it }
-            super.fireTableDataChanged()
-        }
-    }
-
-    private val statModel = object: AbstractTableModel() {
-
-        val statColumns: Array<Pair<String, (Pair<String, Stat>) -> Any>> = arrayOf(
-            "Target Address" to { it.first },
-            "Download Traffic" to { DisplayUtils.toBytes(it.second.downloadTrafficInBytes.toDouble()) },
-            "Upload Traffic" to { DisplayUtils.toBytes(it.second.uploadTrafficInBytes.toDouble()) }
-        )
-        
-        private var statsSnapshot: List<Pair<String, Stat>> = stats.get()
-
-        override fun getRowCount(): Int {
-            return statsSnapshot.size
-        }
-
-        override fun getColumnCount(): Int {
-            return statColumns.size
-        }
-
-        override fun getColumnName(column: Int): String {
-            return statColumns[column].first
-        }
-
-        override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
-            val stat = statsSnapshot[rowIndex]
-            return statColumns[columnIndex].second.invoke(stat)
-        }
-
-        override fun fireTableDataChanged() {
-            statsSnapshot = stats.get().toList()
-            super.fireTableDataChanged()
-        }
-    }
-
-    val connectionTable = JTable(activeModel).also {
+    private val connectionTable = JTable(connectionTableModel).also {
         it.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
     }
-    val statTable = JTable(statModel).also {
+    private val statTable = JTable(statTableModel).also {
         it.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
     }
 
     init {
         timer.scheduleAtFixedRate({
-            server.get()?.connectionManager?.let {
-                connections.set(it.getAllConnections().toList())
-                stats.set(it.getStat().sortedByDescending { it.second.downloadTrafficInBytes.get() })
-            }
-            val selectedLocalAddress = connectionTable.selectedRow.takeIf { it != -1 }?.let {
-                connectionTable.model.getValueAt(it, 2)
-            }
-
-            activeModel.fireTableDataChanged()
-            (0 until activeModel.rowCount).firstOrNull() { row ->
-                activeModel.getValueAt(row, 2) == selectedLocalAddress
-            }?.let {
-                connectionTable.changeSelection(it, 2, false, false)
-            }
-            
-            val selectedTargetAddress = statTable.selectedRow.takeIf { it!= -1 }?.let {
-                statTable.model.getValueAt(it, 0)
-            }
-            statModel.fireTableDataChanged()
-            (0 until statModel.rowCount).firstOrNull() { row ->
-                statModel.getValueAt(row, 0) == selectedTargetAddress
-            }?.let {
-                statTable.changeSelection(it, 0, false, false)
-            }
+            updateDashboardUI()
         }, 1, 1, TimeUnit.SECONDS)
+    }
+
+    private fun updateDashboardUI() {
+        server.get()?.connectionManager?.let {
+            connections.set(it.getAllConnections().toList())
+            stats.set(it.getStat().sortedByDescending { it.second.downloadTrafficInBytes.get() })
+        }
+        val selectedLocalAddress = connectionTable.selectedRow.takeIf { it != -1 }?.let {
+            connectionTable.model.getValueAt(it, 2)
+        }
+
+        connectionTableModel.fireTableDataChanged()
+        (0 until connectionTableModel.rowCount).firstOrNull() { row ->
+            connectionTableModel.getValueAt(row, 2) == selectedLocalAddress
+        }?.let {
+            connectionTable.changeSelection(it, 2, false, false)
+        }
+
+        val selectedTargetAddress = statTable.selectedRow.takeIf { it != -1 }?.let {
+            statTable.model.getValueAt(it, 0)
+        }
+        statTableModel.fireTableDataChanged()
+        (0 until statTableModel.rowCount).firstOrNull() { row ->
+            statTableModel.getValueAt(row, 0) == selectedTargetAddress
+        }?.let {
+            statTable.changeSelection(it, 0, false, false)
+        }
     }
 
     companion object {
@@ -209,7 +146,7 @@ class Desktop {
                 config(frame, configFile)
             }
         })
-        val button = JButton("Start").also { button ->
+        val startButton = JButton("Start").also { button ->
             button.icon = startIcon
             button.addActionListener {
                 if (started.compareAndSet(false, true)) {
@@ -224,9 +161,9 @@ class Desktop {
                 }
             }
         }
-        toolBar.add(button)
+        toolBar.add(startButton)
         if (config.get().autoStart) {
-            button.doClick()
+            startButton.doClick()
         }
         return toolBar
     }
