@@ -44,21 +44,6 @@ class Desktop {
 
     private val mapper = ObjectMapper()
 
-    val activeColumns: Array<Pair<String, (ProxyConnection) -> Any?>> = arrayOf(
-        "Process ID" to { it.process?.processID },
-        "Process Name" to { it.process?.name },
-        "Remote Address" to { it.connection.clientAddress},
-        "Type" to { it.connection.typeName() },
-        "Target Address" to { it.connection.targetAddress() },
-        "Download Traffic" to { DisplayUtils.toBytes(it.connection.getDownloadTrafficInBytes().toDouble()) },
-        "Upload Traffic" to { DisplayUtils.toBytes(it.connection.getUploadTrafficInBytes().toDouble()) }
-    )
-
-    val statColumns: Array<Pair<String, (Pair<String, Stat>) -> Any>> = arrayOf(
-        "Target Address" to { it.first },
-        "Download Traffic" to { DisplayUtils.toBytes(it.second.downloadTrafficInBytes.toDouble()) },
-        "Upload Traffic" to { DisplayUtils.toBytes(it.second.uploadTrafficInBytes.toDouble()) }
-    )
 
     private val proxyIcon = ImageIO.read(Desktop::class.java.getResource("/proxy.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH)
     private val configIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/config.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
@@ -66,8 +51,18 @@ class Desktop {
     private val stopIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/stop.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
 
     private val activeModel = object: AbstractTableModel() {
+
+        val activeColumns: Array<Pair<String, (ProxyConnection) -> Any?>> = arrayOf(
+            "Process ID" to { it.process?.processID },
+            "Process Name" to { it.process?.name },
+            "Remote Address" to { it.connection.clientAddress},
+            "Type" to { it.connection.typeName() },
+            "Target Address" to { it.connection.targetAddress() },
+            "Download Traffic" to { DisplayUtils.toBytes(it.connection.getDownloadTrafficInBytes().toDouble()) },
+            "Upload Traffic" to { DisplayUtils.toBytes(it.connection.getUploadTrafficInBytes().toDouble()) }
+        )
         
-        private var connectionSnapshot: List<ProxyConnection> = connections.get().toList()
+        private var connectionSnapshot: List<ProxyConnection> = connections.get()
 
         override fun getRowCount(): Int {
             return connectionSnapshot.size
@@ -93,8 +88,14 @@ class Desktop {
     }
 
     private val statModel = object: AbstractTableModel() {
+
+        val statColumns: Array<Pair<String, (Pair<String, Stat>) -> Any>> = arrayOf(
+            "Target Address" to { it.first },
+            "Download Traffic" to { DisplayUtils.toBytes(it.second.downloadTrafficInBytes.toDouble()) },
+            "Upload Traffic" to { DisplayUtils.toBytes(it.second.uploadTrafficInBytes.toDouble()) }
+        )
         
-        private var statsSnapshot: List<Pair<String, Stat>> = stats.get().toList()
+        private var statsSnapshot: List<Pair<String, Stat>> = stats.get()
 
         override fun getRowCount(): Int {
             return statsSnapshot.size
