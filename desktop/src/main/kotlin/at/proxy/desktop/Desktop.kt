@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.formdev.flatlaf.FlatLightLaf
 import java.awt.BorderLayout
 import java.awt.Image
-import java.net.InetSocketAddress
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -37,6 +36,10 @@ class Desktop {
     private val timer = Executors.newSingleThreadScheduledExecutor()
     
     private val connectionTableRef = AtomicReference<JTable>()
+    
+    private val statTableRef = AtomicReference<JTable>()
+
+    private val configFile = Paths.get(System.getProperty("user.home"), ".atproxy", "config.json")
 
     private val connections = AtomicReference(emptyList<ProxyConnection>())
     
@@ -68,7 +71,7 @@ class Desktop {
 
     private val activeModel = object: AbstractTableModel() {
         
-        private var connectionSnapshot: List<ProxyConnection> = connections.get().map { it }
+        private var connectionSnapshot: List<ProxyConnection> = connections.get().toList()
 
         override fun getRowCount(): Int {
             return connectionSnapshot.size
@@ -94,9 +97,11 @@ class Desktop {
     }
 
     private val statModel = object: AbstractTableModel() {
+        
+        private var statsSnapshot: List<Pair<String, Stat>> = stats.get().toList()
 
         override fun getRowCount(): Int {
-            return stats.get().size
+            return statsSnapshot.size
         }
 
         override fun getColumnCount(): Int {
@@ -108,8 +113,13 @@ class Desktop {
         }
 
         override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
-            val stat = stats.get()[rowIndex]
+            val stat = statsSnapshot[rowIndex]
             return statColumns[columnIndex].second.invoke(stat)
+        }
+
+        override fun fireTableDataChanged() {
+            statsSnapshot = stats.get().toList()
+            super.fireTableDataChanged()
         }
     }
 
@@ -130,7 +140,17 @@ class Desktop {
             }?.let {
                 connectionTable.changeSelection(it, 3, false, false)
             }
+            
+            val statTable = statTableRef.get()?: return@scheduleAtFixedRate
+            val selectedTargetAddress = statTable.selectedRow.takeIf { it!= -1 }?.let {
+                statTable.model.getValueAt(it, 0)
+            }
             statModel.fireTableDataChanged()
+            (0 until statModel.rowCount).firstOrNull() { row ->
+                statModel.getValueAt(row, 0) == selectedTargetAddress
+            }?.let {
+                statTable.changeSelection(it, 0, false, false)
+            }
         }, 1, 1, TimeUnit.SECONDS)
     }
 
@@ -172,6 +192,8 @@ class Desktop {
         connectionTableRef.set(connectionsTable)
         val dashboard = JScrollPane(connectionsTable)
         val statTable = JTable(statModel)
+        statTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        statTableRef.set(statTable)
         val stat = JScrollPane(statTable)
         val tab = JTabbedPane()
         tab.add("Active", dashboard)
