@@ -11,9 +11,6 @@ import java.awt.Image
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -27,6 +24,10 @@ import kotlin.io.path.writeText
 
 class Desktop {
 
+    init {
+        FlatLightLaf.setup()
+    }
+
     private val config = AtomicReference<LocalConfig>()
 
     private val server = AtomicReference<LocalServer>()
@@ -35,10 +36,6 @@ class Desktop {
 
     private val timer = Executors.newSingleThreadScheduledExecutor()
     
-    private val connectionTableRef = AtomicReference<JTable>()
-    
-    private val statTableRef = AtomicReference<JTable>()
-
     private val configFile = Paths.get(System.getProperty("user.home"), ".atproxy", "config.json")
 
     private val connections = AtomicReference(emptyList<ProxyConnection>())
@@ -122,13 +119,19 @@ class Desktop {
         }
     }
 
+    val connectionTable = JTable(activeModel).also {
+        it.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+    }
+    val statTable = JTable(statModel).also {
+        it.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+    }
+
     init {
         timer.scheduleAtFixedRate({
             server.get()?.connectionManager?.let {
                 connections.set(it.getAllConnections().toList())
                 stats.set(it.getStat().sortedByDescending { it.second.downloadTrafficInBytes.get() })
             }
-            val connectionTable = connectionTableRef.get() ?: return@scheduleAtFixedRate
             val selectedLocalAddress = connectionTable.selectedRow.takeIf { it != -1 }?.let {
                 connectionTable.model.getValueAt(it, 3)
             }
@@ -140,7 +143,6 @@ class Desktop {
                 connectionTable.changeSelection(it, 3, false, false)
             }
             
-            val statTable = statTableRef.get()?: return@scheduleAtFixedRate
             val selectedTargetAddress = statTable.selectedRow.takeIf { it!= -1 }?.let {
                 statTable.model.getValueAt(it, 0)
             }
@@ -164,7 +166,7 @@ class Desktop {
     }
 
     private fun show () {
-        FlatLightLaf.setup()
+
         val frame = JFrame("Proxy")
         frame.setSize(1000, 600)
         frame.isLocationByPlatform = true
@@ -186,13 +188,7 @@ class Desktop {
         val statusBar = createStatusBar()
         frame.add(statusBar, "South")
         
-        val connectionsTable = JTable(activeModel)
-        connectionsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-        connectionTableRef.set(connectionsTable)
-        val dashboard = JScrollPane(connectionsTable)
-        val statTable = JTable(statModel)
-        statTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-        statTableRef.set(statTable)
+        val dashboard = JScrollPane(connectionTable)
         val stat = JScrollPane(statTable)
         val tab = JTabbedPane()
         tab.add("Active", dashboard)
