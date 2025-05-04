@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.imageio.ImageIO
 import javax.swing.*
+import javax.swing.table.TableRowSorter
 import kotlin.io.path.readBytes
 import kotlin.io.path.writeText
 
@@ -58,9 +59,18 @@ class Desktop {
 
     private val connectionTable = JTable(connectionTableModel).also {
         it.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        val sorter = TableRowSorter(it.model)
+        sorter.setComparator(5, Comparator.naturalOrder<DisplayUtils.Bytes>())
+        sorter.setComparator(6, Comparator.naturalOrder<DisplayUtils.Bytes>())
+        it.rowSorter = sorter
     }
+    
     private val statTable = JTable(statTableModel).also {
         it.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        val sorter = TableRowSorter(it.model)
+        sorter.setComparator(1, Comparator.naturalOrder<DisplayUtils.Bytes>())
+        sorter.setComparator(2, Comparator.naturalOrder<DisplayUtils.Bytes>())
+        it.rowSorter = sorter
     }
 
     init {
