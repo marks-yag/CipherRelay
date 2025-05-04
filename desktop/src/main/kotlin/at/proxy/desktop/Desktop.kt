@@ -133,10 +133,10 @@ class Desktop {
         }
 
         val toolBar = createToolBar(frame, configFile)
-        frame.add(toolBar, "North")
+        frame.add(toolBar, BorderLayout.NORTH)
 
         val statusBar = createStatusBar()
-        frame.add(statusBar, "South")
+        frame.add(statusBar, BorderLayout.SOUTH)
         
         val dashboard = JScrollPane(connectionTable)
         val stat = JScrollPane(statTable)
