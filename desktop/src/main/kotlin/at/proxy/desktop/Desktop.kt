@@ -143,22 +143,22 @@ class Desktop {
         configFile: Path
     ): JToolBar {
         val toolBar = JToolBar()
-        toolBar.add(JButton("Configure...").also {
+        toolBar.add(JButton(bundle.getString("configure.button.text")).also {
             it.icon = configIcon
             it.addActionListener {
                 config(frame, configFile)
             }
         })
-        val startButton = JButton("Start").also { button ->
+        val startButton = JButton(bundle.getString("start.button.text")).also { button ->
             button.icon = startIcon
             button.addActionListener {
                 if (started.compareAndSet(false, true)) {
                     start(config.get())
                     button.icon = stopIcon
-                    button.text = "Stop"
+                    button.text = bundle.getString("stop.button.text")
                 } else {
                     button.icon = startIcon
-                    button.text = "Start"
+                    button.text = bundle.getString("start.button.text")
                     started.set(false)
                     stop()
                 }
