@@ -8,11 +8,9 @@ import kotlin.collections.toList
 
 class StatTableModel(private val stats: AtomicReference<List<Pair<String, Stat>>>) : AbstractTableModel() {
 
-    // 创建资源包引用（新增代码）
     private val bundle = ResourceBundle.getBundle("messages")
 
     val statColumns: Array<Pair<String, (Pair<String, Stat>) -> Any>> = arrayOf(
-        // 替换硬编码字符串为资源引用
         bundle.getString("stat.target.address") to { it.first },
         bundle.getString("stat.download.traffic") to { DisplayUtils.toBytes(it.second.downloadTrafficInBytes.toDouble()) },
         bundle.getString("stat.upload.traffic") to { DisplayUtils.toBytes(it.second.uploadTrafficInBytes.toDouble()) }

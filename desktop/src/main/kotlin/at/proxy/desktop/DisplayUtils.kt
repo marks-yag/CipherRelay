@@ -8,9 +8,12 @@ object DisplayUtils {
         KB(1024L, "KB")
     }
 
-    data class Bytes(val amount: Double, val unit: Unit) {
+    data class Bytes(val amount: Double, val unit: Unit) : Comparable<Bytes> {
         override fun toString(): String {
             return "${String.format("%.2f", amount)} ${unit.displayName}"
+        }
+        override fun compareTo(other: Bytes): Int {
+            return (amount * unit.scale).compareTo(other.amount * other.unit.scale)
         }
     }
 

@@ -203,7 +203,7 @@ class Desktop {
     }
 
     private fun config(frame: JFrame, configFile: Path) {
-        val configDialog = JDialog(frame, "Configure")
+        val configDialog = JDialog(frame, bundle.getString("configure.dialog.title"))
         val form = Form {
             LocalConfig()
         }
