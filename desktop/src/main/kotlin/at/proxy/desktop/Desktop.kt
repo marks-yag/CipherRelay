@@ -11,6 +11,7 @@ import java.awt.Image
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.ResourceBundle
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -22,6 +23,8 @@ import kotlin.io.path.writeText
 
 
 class Desktop {
+
+    private val bundle = ResourceBundle.getBundle("messages")
 
     init {
         FlatLightLaf.setup()
@@ -104,7 +107,7 @@ class Desktop {
     }
 
     private fun show () {
-        val frame = JFrame("Proxy")
+        val frame = JFrame(bundle.getString("proxy"))
         frame.setSize(1000, 600)
         frame.isLocationByPlatform = true
         frame.iconImage = proxyIcon
@@ -128,8 +131,8 @@ class Desktop {
         val dashboard = JScrollPane(connectionTable)
         val stat = JScrollPane(statTable)
         val tab = JTabbedPane()
-        tab.add("Active", dashboard)
-        tab.add("Stat", stat)
+        tab.add(bundle.getString("connection.tab.name"), dashboard)
+        tab.add(bundle.getString("stat.tab.name"), stat)
 
         frame.add(tab, BorderLayout.CENTER)
         frame.isVisible = true
