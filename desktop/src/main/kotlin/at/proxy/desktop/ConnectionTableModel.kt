@@ -4,17 +4,19 @@ import at.proxy.local.ProxyConnection
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.table.AbstractTableModel
 import kotlin.collections.map
+import java.util.ResourceBundle
 
 class ConnectionTableModel(private val connections: AtomicReference<List<ProxyConnection>>) : AbstractTableModel() {
+    private val bundle = ResourceBundle.getBundle("messages")
 
     val activeColumns: Array<Pair<String, (ProxyConnection) -> Any?>> = arrayOf(
-        "Process ID" to { it.process?.processID },
-        "Process Name" to { it.process?.name },
-        "Remote Address" to { it.connection.clientAddress},
-        "Type" to { it.connection.typeName() },
-        "Target Address" to { it.connection.targetAddress() },
-        "Download Traffic" to { DisplayUtils.toBytes(it.connection.getDownloadTrafficInBytes().toDouble()) },
-        "Upload Traffic" to { DisplayUtils.toBytes(it.connection.getUploadTrafficInBytes().toDouble()) }
+        bundle.getString("connection.process.id") to { it.process?.processID },
+        bundle.getString("connection.process.name") to { it.process?.name },
+        bundle.getString("connection.remote.address") to { it.connection.clientAddress},
+        bundle.getString("connection.type") to { it.connection.typeName() },
+        bundle.getString("connection.target.address") to { it.connection.targetAddress() },
+        bundle.getString("connection.download.traffic") to { DisplayUtils.toBytes(it.connection.getDownloadTrafficInBytes().toDouble()) },
+        bundle.getString("connection.upload.traffic") to { DisplayUtils.toBytes(it.connection.getUploadTrafficInBytes().toDouble()) }
     )
 
     private var connectionSnapshot: List<ProxyConnection> = connections.get()
