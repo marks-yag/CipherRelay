@@ -15,8 +15,8 @@ class ConnectionTableModel(private val connections: AtomicReference<List<ProxyCo
         bundle.getString("connection.remote.address") to { SocketAddress(it.connection.clientAddress)},
         bundle.getString("connection.type") to { it.connection.typeName() },
         bundle.getString("connection.target.address") to { it.connection.targetAddress() },
-        bundle.getString("connection.download.traffic") to { DisplayUtils.toBytes(it.connection.getDownloadTrafficInBytes().toDouble()) },
-        bundle.getString("connection.upload.traffic") to { DisplayUtils.toBytes(it.connection.getUploadTrafficInBytes().toDouble()) }
+        bundle.getString("connection.downstream.traffic") to { DisplayUtils.toBytes(it.connection.getDownloadTrafficInBytes().toDouble()) },
+        bundle.getString("connection.upstream.traffic") to { DisplayUtils.toBytes(it.connection.getUploadTrafficInBytes().toDouble()) }
     )
 
     private var connectionSnapshot: List<ProxyConnection> = connections.get()
