@@ -43,6 +43,11 @@
         <appender-ref ref="FILE"/>
     </logger>
 
+    <logger name="ketty" level="${log.level:-INFO}" additivity="false">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+
     <root level="${root.log.level:-WARN}">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
