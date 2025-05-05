@@ -73,6 +73,13 @@ class Desktop {
         it.rowSorter = sorter
     }
 
+    private val upstreamTraffic = JLabel("N/A")
+
+
+    private val downstreamTraffic = JLabel("N/A")
+
+    private val endpoint = JLabel("N/A")
+
     init {
         timer.scheduleAtFixedRate({
             updateDashboardUI()
@@ -103,6 +110,15 @@ class Desktop {
             statTableModel.getValueAt(row, 0) == selectedTargetAddress
         }?.let {
             statTable.changeSelection(it, 0, false, false)
+        }
+
+        SwingUtilities.invokeLater {
+            server.get()?.let {
+                upstreamTraffic.text = DisplayUtils.toBytes(it.metrics.upstreamTrafficEncrypted.count()).toString()
+                downstreamTraffic.text = DisplayUtils.toBytes(it.metrics.downstreamTrafficEncrypted.count()).toString()
+
+            }
+            endpoint.text = server.get()?.getEndpoint()?.toString() ?: "N/A"
         }
     }
 
@@ -183,31 +199,14 @@ class Desktop {
 
     private fun createStatusBar(): JPanel {
         val statusBar = JPanel()
-        statusBar.add(JLabel("Upstream:"))
-        statusBar.add(JLabel("N/A").also { label ->
-            Timer(1000) {
-                server.get()?.let {
-                    label.text = DisplayUtils.toBytes(server.get().metrics.upstreamTrafficEncrypted.count()).toString()
-                }
-            }.start()
-        })
+        statusBar.add(JLabel(bundle.getString("status.upstream") + ":"))
+        statusBar.add(upstreamTraffic)
 
-        statusBar.add(JLabel("Downstream:"))
-        statusBar.add(JLabel("N/A").also { label ->
-            Timer(1000) {
-                server.get()?.let {
-                    label.text = DisplayUtils.toBytes(server.get().metrics.downstreamTrafficEncrypted.count()).toString()
-                }
-            }.start()
-        })
+        statusBar.add(JLabel(bundle.getString("status.downstream") + ":"))
+        statusBar.add(downstreamTraffic)
         
-        statusBar.add(JLabel().also { label -> 
-            Timer(1000) {
-                server.get()?.let { 
-                    label.text = "Listening: ${it.getEndpoint()}"
-                }
-            }.start()
-        })
+        statusBar.add(JLabel(bundle.getString("status.listening") + ":"))
+        statusBar.add(endpoint)
         
         return statusBar
     }
