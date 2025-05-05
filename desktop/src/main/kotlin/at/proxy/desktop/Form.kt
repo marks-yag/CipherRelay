@@ -3,6 +3,7 @@ package at.proxy.desktop
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.Insets
+import java.util.ResourceBundle
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -16,12 +17,14 @@ fun interface Extractor<Input, Model> {
 
 class Form<R>(private val r: () -> R) {
     
+    private val bundle = ResourceBundle.getBundle("messages")
+    
     private val inputs = ArrayList<(R) -> Unit>()
     
     private val panel = JPanel(GridBagLayout())
     
     fun <T : JComponent> add(label: String, component: T, extractor: Extractor<T, R>) : Form<R> {
-        panel.add(JLabel(label), getConstraints().apply { 
+        panel.add(JLabel("$label:"), getConstraints().apply { 
             gridx = 0
             gridy = inputs.size
             weightx = 0.2
@@ -38,7 +41,7 @@ class Form<R>(private val r: () -> R) {
     }
     
     fun create(callback: (R) -> Unit) : JPanel {
-        panel.add(JButton("Submit").apply {
+        panel.add(JButton(bundle.getString("config.submit")).apply {
             addActionListener {
                 val obj = r()
                 inputs.forEach { 

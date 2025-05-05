@@ -217,16 +217,16 @@ class Desktop {
         val form = Form {
             LocalConfig()
         }
-        form.add("Local Port:", JTextField(config.get().port.toString(), 32)) { input, config ->
+        form.add(bundle.getString("config.local.port"), JTextField(config.get().port.toString(), 32)) { input, config ->
             config.port = input.text.toInt()
         }
-        form.add("Remote Address:", JTextField(config.get().remoteEndpoint, 32)) { input, config ->
+        form.add(bundle.getString("config.remote.address"), JTextField(config.get().remoteEndpoint, 32)) { input, config ->
             config.remoteEndpoint = input.text
         }
-        form.add("Shared Key:", JPasswordField(config.get().key, 32)) { input, config ->
+        form.add(bundle.getString("config.shared.key"), JPasswordField(config.get().key, 32)) { input, config ->
             config.key = String(input.password)
         }
-        form.add("Auto Start:", JCheckBox("", config.get().autoStart)) { input, config ->
+        form.add(bundle.getString("config.auto.start"), JCheckBox("", config.get().autoStart)) { input, config ->
             config.autoStart = input.isSelected
         }
 
