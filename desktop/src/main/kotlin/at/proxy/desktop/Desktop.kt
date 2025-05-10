@@ -12,6 +12,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.ResourceBundle
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -47,7 +48,6 @@ class Desktop {
 
     private val mapper = ObjectMapper()
 
-
     private val proxyIcon = ImageIO.read(Desktop::class.java.getResource("/proxy.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH)
     private val configIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/config.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
     private val startIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/start.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
@@ -75,10 +75,11 @@ class Desktop {
 
     private val upstreamTraffic = JLabel("N/A")
 
-
     private val downstreamTraffic = JLabel("N/A")
 
     private val endpoint = JLabel("N/A")
+    
+    private val executor = Executors.newSingleThreadExecutor()
 
     init {
         timer.scheduleAtFixedRate({
@@ -178,15 +179,19 @@ class Desktop {
         val startButton = JButton(bundle.getString("start.button.text")).also { button ->
             button.icon = startIcon
             button.addActionListener {
-                if (started.compareAndSet(false, true)) {
-                    start(config.get())
+                button.isEnabled = false
+                val future = if (started.compareAndSet(false, true)) {
                     button.icon = stopIcon
                     button.text = bundle.getString("stop.button.text")
+                    start(config.get())
                 } else {
                     button.icon = startIcon
                     button.text = bundle.getString("start.button.text")
                     started.set(false)
                     stop()
+                }
+                future.whenComplete { _, _ ->
+                    button.isEnabled = true
                 }
             }
         }
@@ -239,11 +244,14 @@ class Desktop {
         configDialog.isVisible = true
     }
 
-    private fun start(config: LocalConfig) {
-        server.set(LocalServer(config))
-    }
+    private fun start(config: LocalConfig) =
+        CompletableFuture.runAsync({
+            server.set(LocalServer(config))
+        }, executor)
 
-    private fun stop() {
-        server.get().close()
-    }
+    private fun stop() =
+        CompletableFuture.runAsync( {
+            server.get()?.close()
+        }, executor)
+    
 }
