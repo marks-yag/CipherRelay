@@ -140,7 +140,7 @@ class Desktop {
         frame.iconImage = proxyIcon
         frame.layout = BorderLayout()
         frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
-        frame.isVisible = true
+        
 
         val configFile = Paths.get(System.getProperty("user.home"), ".at-proxy", "config.json")
         if (Files.exists(configFile)) {
@@ -163,6 +163,7 @@ class Desktop {
         tab.add(bundle.getString("stat.tab.name"), stat)
 
         frame.add(tab, BorderLayout.CENTER)
+        frame.isVisible = true
     }
 
     private fun createToolBar(
