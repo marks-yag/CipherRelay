@@ -38,10 +38,8 @@ class Desktop {
 
     private val started = AtomicBoolean()
 
-    private val timer = Executors.newSingleThreadScheduledExecutor()
+    private val executor = Executors.newSingleThreadScheduledExecutor()
     
-    private val configFile = Paths.get(System.getProperty("user.home"), ".atproxy", "config.json")
-
     private val connections = AtomicReference(emptyList<ProxyConnection>())
     
     private val stats = AtomicReference(emptyList<Pair<String, Stat>>())
@@ -78,11 +76,9 @@ class Desktop {
     private val downstreamTraffic = JLabel("N/A")
 
     private val endpoint = JLabel("N/A")
-    
-    private val executor = Executors.newSingleThreadExecutor()
 
     init {
-        timer.scheduleAtFixedRate({
+        executor.scheduleAtFixedRate({
             updateDashboardUI()
         }, 1, 1, TimeUnit.SECONDS)
     }
