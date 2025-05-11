@@ -49,12 +49,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.marks-yag</groupId>
-            <artifactId>ketty-rpc</artifactId>
-            <version>0.20.2</version>
-        </dependency>
-
-        <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
             <version>4.1.76.Final</version>

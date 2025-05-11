@@ -24,6 +24,8 @@ import kotlin.io.path.readBytes
 import kotlin.io.path.writeText
 
 
+private const val ICON_SIZE = 12
+
 class Desktop {
 
     private val bundle = ResourceBundle.getBundle("messages")
@@ -46,10 +48,18 @@ class Desktop {
 
     private val mapper = ObjectMapper()
 
-    private val proxyIcon = ImageIO.read(Desktop::class.java.getResource("/favicon.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH)
-    private val configIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/config.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
-    private val startIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/start.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
-    private val stopIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/stop.png")).getScaledInstance(12, 12, Image.SCALE_SMOOTH))
+    private val proxyIcon = ImageIO.read(Desktop::class.java.getResource("/favicon.png")).getScaledInstance(
+        ICON_SIZE,
+        ICON_SIZE, Image.SCALE_SMOOTH)
+    private val configIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/config.png")).getScaledInstance(
+        ICON_SIZE,
+        ICON_SIZE, Image.SCALE_SMOOTH))
+    private val startIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/start.png")).getScaledInstance(
+        ICON_SIZE,
+        ICON_SIZE, Image.SCALE_SMOOTH))
+    private val stopIcon = ImageIcon(ImageIO.read(Desktop::class.java.getResource("/stop.png")).getScaledInstance(
+        ICON_SIZE,
+        ICON_SIZE, Image.SCALE_SMOOTH))
 
     private val connectionTableModel = ConnectionTableModel(connections)
 

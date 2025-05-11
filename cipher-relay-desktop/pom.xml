@@ -55,22 +55,43 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.1.1</version>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.github.yag.cr.desktop.Desktop</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
                 <executions>
                     <execution>
+                        <id>copy-jar</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>shade</goal>
+                            <goal>jar</goal>
                         </goals>
                         <configuration>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>all-in-one</shadedClassifierName>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.github.yag.cr.desktop.Desktop</mainClass>
-                                </transformer>
-                            </transformers>
+                            <classifier>lib</classifier>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.7.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <includeScope>runtime</includeScope>
                         </configuration>
                     </execution>
                 </executions>
@@ -90,8 +111,8 @@
                         <configuration>
                             <name>Cipher Relay Desktop</name>
                             <icon>${project.basedir}/src/main/resources/favicon.ico</icon>
-                            <input>${project.build.directory}</input>
-                            <mainjar>${artifactId}-${project.version}-all-in-one.jar</mainjar>
+                            <input>${project.build.directory}/lib</input>
+                            <mainjar>${artifactId}-${project.version}.jar</mainjar>
                             <winmenu>true</winmenu>
                             <vendor>Marks Yag</vendor>
                             <verbose>true</verbose>
