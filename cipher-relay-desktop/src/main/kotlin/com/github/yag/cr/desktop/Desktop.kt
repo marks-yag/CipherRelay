@@ -197,7 +197,10 @@ class Desktop {
                     started.set(false)
                     stop()
                 }
-                future.whenComplete { _, _ ->
+                future.thenApply { _ ->
+                    button.isEnabled = true
+                }.exceptionally {
+                    it.printStackTrace()
                     button.isEnabled = true
                 }
             }

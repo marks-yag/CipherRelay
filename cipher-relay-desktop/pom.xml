@@ -112,7 +112,7 @@
                             <name>Cipher Relay Desktop</name>
                             <icon>${project.basedir}/src/main/resources/favicon.ico</icon>
                             <input>${project.build.directory}/lib</input>
-                            <mainjar>${artifactId}-${project.version}.jar</mainjar>
+                            <mainjar>${artifactId}-${project.version}-lib.jar</mainjar>
                             <winmenu>true</winmenu>
                             <vendor>Marks Yag</vendor>
                             <verbose>true</verbose>
