@@ -5,14 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.marks-yag</groupId>
-    <artifactId>at-proxy</artifactId>
+    <artifactId>cipher-relay</artifactId>
     <version>0.1.0</version>
     <packaging>pom</packaging>
     <modules>
-        <module>protocol</module>
-        <module>remote</module>
-        <module>local</module>
-        <module>desktop</module>
+        <module>cipher-relay-protocol</module>
+        <module>cipher-relay-remote</module>
+        <module>cipher-relay-local</module>
+        <module>cipher-relay-desktop</module>
     </modules>
 
     <properties>
@@ -94,7 +94,7 @@
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib</artifactId>
-            <version>1.9.23</version>
+            <version>${kotlin.version}</version>
         </dependency>
     </dependencies>
 

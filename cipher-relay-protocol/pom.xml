@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.github.marks-yag</groupId>
-        <artifactId>at-proxy</artifactId>
+        <artifactId>cipher-relay</artifactId>
         <version>0.1.0</version>
     </parent>
 
-    <artifactId>at-proxy-protocol</artifactId>
+    <artifactId>cipher-relay-protocol</artifactId>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
