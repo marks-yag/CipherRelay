@@ -75,7 +75,7 @@ class RemoteServer(config: RemoteConfig) : AutoCloseable {
 
                             override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
                                 if (msg is ByteBuf) {
-                                    val echo = connection.get("echo-$connectionId") as (ResponsePacket) -> Unit
+                                    @Suppress("UNCHECKED_CAST") val echo = connection.get("echo-$connectionId") as (ResponsePacket) -> Unit
                                     val connectionRequest = connection.get("request-$connectionId") as (RequestPacket)
                                     val encrypt = Unpooled.wrappedBuffer(crypto.encrypt(msg.readArray()))
                                     echo.invoke(connectionRequest.status(StatusCode.PARTIAL_CONTENT, encrypt))

@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.github.marks-yag</groupId>
         <artifactId>at-proxy</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>0.1.0</version>
     </parent>
 
     <artifactId>desktop</artifactId>
@@ -70,17 +70,28 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.graalvm.buildtools</groupId>
-                        <artifactId>native-maven-plugin</artifactId>
-                        <version>${native.maven.plugin.version}</version>
-                        <extensions>true</extensions>
+                        <groupId>com.github.akman</groupId>
+                        <artifactId>jpackage-maven-plugin</artifactId>
+                        <version>0.1.5</version>
+                        <configuration>
+                            <name>AT-Proxy-Desktop</name>
+                            <icon>${project.basedir}/src/main/resources/favicon.ico</icon>
+                            <input>${project.build.directory}</input>
+                            <mainjar>desktop-${project.version}-all-in-one.jar</mainjar>
+                            <winmenu>true</winmenu>
+                            <vendor>Marks Yag</vendor>
+                            <verbose>true</verbose>
+                            <windirchooser>true</windirchooser>
+                            <winmenugroup>AT Proxy Desktop</winmenugroup>
+                            <appversion>${project.version}</appversion>
+                        </configuration>
                         <executions>
                             <execution>
-                                <id>build-native</id>
-                                <goals>
-                                    <goal>compile-no-fork</goal>
-                                </goals>
+                                <id>jpackage</id>
                                 <phase>package</phase>
+                                <goals>
+                                    <goal>jpackage</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>
