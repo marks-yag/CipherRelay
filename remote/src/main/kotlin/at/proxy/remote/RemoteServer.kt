@@ -56,8 +56,9 @@ class RemoteServer(config: RemoteConfig) : AutoCloseable {
                     }
                 })
             }
+            @Suppress("UNCHECKED_CAST")
             request {
-                set(AtProxyRequest.CONNECT, KettyRequestHandler { connection, request, echo ->
+                set(AtProxyRequest.CONNECT) { connection, request, echo ->
                     val endpoint = request.body.toString(Charsets.UTF_8)
                     log.info("Received connect request, endpoint: {}.", endpoint)
                     val host = endpoint.split(":").first()
@@ -68,14 +69,14 @@ class RemoteServer(config: RemoteConfig) : AutoCloseable {
                         .channel(getChannelClass())
                         .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 20_000)
                         .option(ChannelOption.SO_KEEPALIVE, true)
-                        .handler(object: ChannelInboundHandlerAdapter() {
+                        .handler(object : ChannelInboundHandlerAdapter() {
                             override fun channelActive(ctx: ChannelHandlerContext) {
                                 connection.put("ctx-$connectionId", ctx)
                             }
 
                             override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
                                 if (msg is ByteBuf) {
-                                    @Suppress("UNCHECKED_CAST") val echo = connection.get("echo-$connectionId") as (ResponsePacket) -> Unit
+                                    val echo = connection.get("echo-$connectionId") as (ResponsePacket) -> Unit
                                     val connectionRequest = connection.get("request-$connectionId") as (RequestPacket)
                                     val encrypt = Unpooled.wrappedBuffer(crypto.encrypt(msg.readArray()))
                                     echo.invoke(connectionRequest.status(StatusCode.PARTIAL_CONTENT, encrypt))
@@ -111,28 +112,29 @@ class RemoteServer(config: RemoteConfig) : AutoCloseable {
                             }
                         })
                     (connection.get("connections") as ConcurrentHashMap<Long, ChannelFuture>)[connectionId] = c
-                })
-                set(AtProxyRequest.DISCONNECT, KettyRequestHandler { connection, request, echo ->
+                }
+                set(AtProxyRequest.DISCONNECT) { connection, request, echo ->
                     val connectionId = request.body.readLong()
                     log.info("Disconnect: {}.", connectionId)
-                    (connection.get("connections") as ConcurrentHashMap<Long, ChannelFuture>).remove(connectionId)?.channel()?.close()
-                })
-                set(AtProxyRequest.WRITE, KettyRequestHandler { connection, request, echo ->
+                    (connection.get("connections") as ConcurrentHashMap<Long, ChannelFuture>).remove(connectionId)
+                        ?.channel()?.close()
+                }
+                set(AtProxyRequest.WRITE) { connection, request, echo ->
                     val connectionId = request.body.readLong()
                     log.debug("Received write request, connectionId: {}", connectionId)
                     val ctx = connection.get("ctx-$connectionId") as ChannelHandlerContext
                     ctx.writeAndFlush(Unpooled.wrappedBuffer(crypto.decrypt(request.body.readArray())))
                     echo(request.ok())
-                })
-                set(AtProxyRequest.READ, KettyRequestHandler { connection, request, echo ->
+                }
+                set(AtProxyRequest.READ) { connection, request, echo ->
                     val connectionId = request.body.readLong()
                     log.debug("Received read request, connectionId: {}", connectionId)
                     connection.put("echo-$connectionId", echo)
                     connection.put("request-$connectionId", request)
-                })
-                set(AtProxyRequest.STATUS, KettyRequestHandler { connection, request, echo ->
+                }
+                set(AtProxyRequest.STATUS) { connection, request, echo ->
                     echo(request.ok("hello"))
-                })
+                }
             }
         }
     }
