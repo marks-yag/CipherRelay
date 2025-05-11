@@ -1,8 +1,8 @@
-module at.proxy.local {
+module com.github.yag.cr.local {
     requires kotlin.stdlib;
     requires io.netty.all;
     requires ketty.core;
-    requires at.proxy.protocol;
+    requires com.github.yag.cr.protocol;
     
-    exports at.proxy.local;
+    exports com.github.yag.cr.local;
 }

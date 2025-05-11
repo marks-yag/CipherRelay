@@ -1,4 +1,4 @@
-package at.proxy.protocol
+package com.github.yag.cr.protocol
 
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled

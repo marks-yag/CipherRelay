@@ -1,10 +1,8 @@
-module at.proxy.desktop {
+module com.github.yag.cr.desktop {
     requires kotlin.stdlib;
     requires java.desktop;
     requires com.fasterxml.jackson.databind;
     requires org.slf4j;
-    requires at.proxy.local;
+    requires com.github.yag.cr.local;
     requires com.formdev.flatlaf;
-    
-    opens at.proxy.desktop to com.fasterxml.jackson.databind;
 }

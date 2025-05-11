@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package at.proxy.local
+package com.github.yag.cr.local
 
 import com.github.yag.crypto.AESCrypto
 import io.netty.buffer.Unpooled

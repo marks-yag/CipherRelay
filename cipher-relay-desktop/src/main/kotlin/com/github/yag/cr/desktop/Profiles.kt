@@ -1,6 +1,6 @@
-package at.proxy.desktop
+package com.github.yag.cr.desktop
 
-import at.proxy.local.LocalConfig
+import com.github.yag.cr.local.LocalConfig
 
 data class DesktopConfig(
     val profiles: Map<String, LocalConfig>,

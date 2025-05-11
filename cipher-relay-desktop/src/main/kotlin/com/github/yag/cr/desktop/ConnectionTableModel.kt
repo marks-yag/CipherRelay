@@ -1,6 +1,6 @@
-package at.proxy.desktop
+package com.github.yag.cr.desktop
 
-import at.proxy.local.ProxyConnection
+import com.github.yag.cr.local.ProxyConnection
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.table.AbstractTableModel
 import kotlin.collections.map

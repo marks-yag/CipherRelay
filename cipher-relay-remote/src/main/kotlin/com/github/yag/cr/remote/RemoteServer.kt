@@ -1,6 +1,6 @@
-package at.proxy.remote
+package com.github.yag.cr.remote
 
-import at.proxy.protocol.AtProxyRequest
+import com.github.yag.cr.protocol.AtProxyRequest
 import com.github.yag.crypto.AESCrypto
 import config.config
 import io.netty.bootstrap.Bootstrap

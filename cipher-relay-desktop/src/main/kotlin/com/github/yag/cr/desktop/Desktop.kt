@@ -1,9 +1,9 @@
-package at.proxy.desktop
+package com.github.yag.cr.desktop
 
-import at.proxy.local.LocalConfig
-import at.proxy.local.LocalServer
-import at.proxy.local.ProxyConnection
-import at.proxy.local.Stat
+import com.github.yag.cr.local.LocalConfig
+import com.github.yag.cr.local.LocalServer
+import com.github.yag.cr.local.ProxyConnection
+import com.github.yag.cr.local.Stat
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.formdev.flatlaf.FlatLightLaf
 import java.awt.BorderLayout

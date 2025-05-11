@@ -1,6 +1,6 @@
-module at.proxy.protocol {
+module com.github.yag.cr.protocol {
     requires kotlin.stdlib;
     requires io.netty.all;
     
-    exports at.proxy.protocol;
+    exports com.github.yag.cr.protocol;
 }

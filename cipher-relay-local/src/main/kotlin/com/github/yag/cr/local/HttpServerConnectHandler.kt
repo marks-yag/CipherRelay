@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package at.proxy.local
+package com.github.yag.cr.local
 
-import at.proxy.protocol.AtProxyRequest
-import at.proxy.protocol.Encoders.Companion.encode
-import at.proxy.protocol.VirtualChannel
+import com.github.yag.cr.protocol.AtProxyRequest
+import com.github.yag.cr.protocol.Encoders.Companion.encode
+import com.github.yag.cr.protocol.VirtualChannel
 import com.github.yag.crypto.AESCrypto
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler.Sharable

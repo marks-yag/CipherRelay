@@ -1,4 +1,4 @@
-package at.proxy.desktop
+package com.github.yag.cr.desktop
 
 object DisplayUtils {
 

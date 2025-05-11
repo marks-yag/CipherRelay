@@ -14,7 +14,7 @@
     <dependencies>
         <dependency>
             <groupId>com.github.marks-yag</groupId>
-            <artifactId>at-proxy-local</artifactId>
+            <artifactId>cipher-relay-local</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -34,6 +34,20 @@
             <groupId>com.formdev</groupId>
             <artifactId>flatlaf</artifactId>
             <version>3.5.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.2.11</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>1.2.11</version>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 
@@ -74,15 +88,15 @@
                         <artifactId>jpackage-maven-plugin</artifactId>
                         <version>0.1.5</version>
                         <configuration>
-                            <name>AT-Proxy-Desktop</name>
+                            <name>Cipher Relay Desktop</name>
                             <icon>${project.basedir}/src/main/resources/favicon.ico</icon>
                             <input>${project.build.directory}</input>
-                            <mainjar>desktop-${project.version}-all-in-one.jar</mainjar>
+                            <mainjar>${artifactId}-${project.version}-all-in-one.jar</mainjar>
                             <winmenu>true</winmenu>
                             <vendor>Marks Yag</vendor>
                             <verbose>true</verbose>
                             <windirchooser>true</windirchooser>
-                            <winmenugroup>AT Proxy Desktop</winmenugroup>
+                            <winmenugroup>Cipher Relay</winmenugroup>
                             <appversion>${project.version}</appversion>
                         </configuration>
                         <executions>

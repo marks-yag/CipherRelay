@@ -1,4 +1,4 @@
-package at.proxy.remote
+package com.github.yag.cr.remote
 
 import config.Value
 

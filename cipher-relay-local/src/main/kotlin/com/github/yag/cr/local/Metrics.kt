@@ -1,4 +1,4 @@
-package at.proxy.local
+package com.github.yag.cr.local
 
 import io.micrometer.core.instrument.Counter
 import io.micrometer.prometheusmetrics.PrometheusConfig

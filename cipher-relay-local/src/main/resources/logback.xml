@@ -27,7 +27,7 @@
         </layout>
     </appender>
 
-    <logger name="at.proxy" level="${log.level:-INFO}" additivity="false">
+    <logger name="com.github.yag.cr" level="${log.level:-INFO}" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
 

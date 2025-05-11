@@ -1,4 +1,4 @@
-package at.proxy.protocol
+package com.github.yag.cr.protocol
 
 import ketty.core.client.KettyRequestType
 
