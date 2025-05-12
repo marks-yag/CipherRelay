@@ -6,8 +6,11 @@ import com.github.yag.cr.local.ProxyConnection
 import com.github.yag.cr.local.Stat
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.formdev.flatlaf.FlatLightLaf
+import org.slf4j.LoggerFactory
 import java.awt.BorderLayout
 import java.awt.Image
+import java.awt.image.ImageFilter
+import java.net.BindException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -22,6 +25,7 @@ import javax.swing.*
 import javax.swing.table.TableRowSorter
 import kotlin.io.path.readBytes
 import kotlin.io.path.writeText
+import kotlin.math.log
 
 
 private const val ICON_SIZE = 12
@@ -130,6 +134,9 @@ class Desktop {
     }
 
     companion object {
+        
+        private val LOG = LoggerFactory.getLogger(Desktop::class.java)
+        
         @JvmStatic
         fun main(args: Array<String>) {
             val desktop = Desktop()
@@ -186,21 +193,34 @@ class Desktop {
         val startButton = JButton(bundle.getString("start.button.text")).also { button ->
             button.icon = startIcon
             button.addActionListener {
+                LOG.info("start button clicked")
                 button.isEnabled = false
-                val future = if (started.compareAndSet(false, true)) {
-                    button.icon = stopIcon
-                    button.text = bundle.getString("stop.button.text")
-                    start(config.get())
+                val future = if (!started.get()) {
+                    start(config.get()).thenAccept {
+                        button.icon = stopIcon
+                        button.text = bundle.getString("stop.button.text")
+                        started.set(true)
+                    }
                 } else {
-                    button.icon = startIcon
-                    button.text = bundle.getString("start.button.text")
-                    started.set(false)
-                    stop()
+                    stop().thenAccept {
+                        button.icon = startIcon
+                        button.text = bundle.getString("start.button.text")
+                        started.set(false)
+                    }
                 }
-                future.thenApply { _ ->
-                    button.isEnabled = true
-                }.exceptionally {
-                    it.printStackTrace()
+                future.whenComplete { _, exception ->
+                    if (exception!= null) {
+                        val message = when (exception) {
+                            is BindException -> {
+                                bundle.getString("error.bind")
+                            }
+                            else -> {
+                                bundle.getString("error.connect")
+                            }
+                        }
+                        JOptionPane.showMessageDialog(frame,
+                            "$message: ${exception.message}", bundle.getString("error.title"), JOptionPane.ERROR_MESSAGE)
+                    }
                     button.isEnabled = true
                 }
             }

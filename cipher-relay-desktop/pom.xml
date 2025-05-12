@@ -61,6 +61,7 @@
                     <archive>
                         <manifest>
                             <mainClass>com.github.yag.cr.desktop.Desktop</mainClass>
+                            <addClasspath>true</addClasspath>
                         </manifest>
                     </archive>
                 </configuration>
@@ -112,7 +113,7 @@
                             <name>Cipher Relay Desktop</name>
                             <icon>${project.basedir}/src/main/resources/favicon.ico</icon>
                             <input>${project.build.directory}/lib</input>
-                            <mainjar>${artifactId}-${project.version}-lib.jar</mainjar>
+                            <mainjar>${project.artifactId}-${project.version}-lib.jar</mainjar>
                             <winmenu>true</winmenu>
                             <vendor>Marks Yag</vendor>
                             <verbose>true</verbose>
