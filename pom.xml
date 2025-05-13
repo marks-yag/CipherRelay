@@ -25,7 +25,57 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <native.maven.plugin.version>0.10.2</native.maven.plugin.version>
         <kotlin.version>2.1.0</kotlin.version>
+        <ketty.version>0.23.1-SNAPSHOT</ketty.version>
+        <netty.version>4.1.76.Final</netty.version>
+        <micrometer.version>1.13.2</micrometer.version>
+        <crypto.version>0.9.11</crypto.version>
+        <oshi.version>6.4.0</oshi.version>
     </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.github.marks-yag</groupId>
+                <artifactId>ketty-utils</artifactId>
+                <version>${ketty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.marks-yag</groupId>
+                <artifactId>ketty-core</artifactId>
+                <version>${ketty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-core</artifactId>
+                <version>${micrometer.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-registry-prometheus</artifactId>
+                <version>${micrometer.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-registry-jmx</artifactId>
+                <version>${micrometer.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.marks-yag</groupId>
+                <artifactId>crypto</artifactId>
+                <version>${crypto.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.oshi</groupId>
+                <artifactId>oshi-core</artifactId>
+                <version>${oshi.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <repositories>
         <repository>

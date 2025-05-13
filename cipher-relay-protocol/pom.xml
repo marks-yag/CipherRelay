@@ -21,7 +21,6 @@
         <dependency>
             <groupId>com.github.marks-yag</groupId>
             <artifactId>ketty-core</artifactId>
-            <version>0.20.2</version>
         </dependency>
     </dependencies>
 

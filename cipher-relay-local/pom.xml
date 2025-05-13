@@ -27,44 +27,37 @@
         <dependency>
             <groupId>com.github.marks-yag</groupId>
             <artifactId>ketty-core</artifactId>
-            <version>0.23.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>com.github.marks-yag</groupId>
             <artifactId>ketty-utils</artifactId>
-            <version>0.23.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>com.github.marks-yag</groupId>
             <artifactId>crypto</artifactId>
-            <version>0.9.11</version>
         </dependency>
 
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>4.1.76.Final</version>
         </dependency>
 
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-core</artifactId>
-            <version>1.13.2</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
-            <version>1.13.2</version>
         </dependency>
 
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-jmx</artifactId>
-            <version>1.13.2</version>
         </dependency>
 
         <dependency>
@@ -76,7 +69,6 @@
         <dependency>
             <groupId>com.github.oshi</groupId>
             <artifactId>oshi-core</artifactId>
-            <version>6.4.0</version>
         </dependency>
     </dependencies>
 
