@@ -9,7 +9,6 @@ import com.formdev.flatlaf.FlatLightLaf
 import org.slf4j.LoggerFactory
 import java.awt.BorderLayout
 import java.awt.Image
-import java.awt.image.ImageFilter
 import java.net.BindException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -25,7 +24,6 @@ import javax.swing.*
 import javax.swing.table.TableRowSorter
 import kotlin.io.path.readBytes
 import kotlin.io.path.writeText
-import kotlin.math.log
 
 
 private const val ICON_SIZE = 12
@@ -147,7 +145,7 @@ class Desktop {
     }
 
     private fun show () {
-        val frame = JFrame(bundle.getString("proxy"))
+        val frame = JFrame(bundle.getString("app.name"))
         frame.setSize(1000, 600)
         frame.isLocationByPlatform = true
         frame.iconImage = proxyIcon
