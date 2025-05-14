@@ -167,9 +167,8 @@ class Desktop {
         frame.iconImage = proxyIcon
         frame.layout = BorderLayout()
         frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
-        
 
-        val configFile = Paths.get(System.getProperty("user.home"), ".at-proxy", "config.json")
+        val configFile = Paths.get(System.getProperty("user.home"), ".cipher-relay", "config.json")
         if (Files.exists(configFile)) {
             mapper.readValue(configFile.readBytes(), LocalConfig::class.java).let { config.set(it) }
         } else {
